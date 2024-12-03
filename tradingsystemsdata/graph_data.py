@@ -7,7 +7,7 @@ import pandas as pd
 # pylint: disable=unbalanced-tuple-unpacking
 # pylint: disable=no-else-return
 
-class PerformanceGraph():
+class GraphData():
     """
     Class of functions used to return data to graph trading system performance
 

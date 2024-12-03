@@ -7,7 +7,7 @@ results in table and graph form.
 # Imports
 import copy
 import pandas as pd
-from tradingsystemsdata.graphs import PerformanceGraph as perfgraph
+from tradingsystemsdata.graph_data import GraphData
 from tradingsystemsdata.marketdata import Markets, NorgateFunctions
 from tradingsystemsdata.positions import Positions
 from tradingsystemsdata.pnl import Profit
@@ -465,12 +465,12 @@ class TestStrategy():
         es_dict['entry_signal_indicators'] = self.default_dict[
             'df_entry_signal_indicators']
 
-        graph_params = perfgraph.graph_variables(
+        graph_params = GraphData.graph_variables(
                 prices=self.tables['prices'], entry_type=self.params['entry_type'],
                 entry_signal_indicators=es_dict['entry_signal_indicators'])
         
         # Create the trade signal points
-        signal_dict = perfgraph.create_signals(
+        signal_dict = GraphData.create_signals(
             prices=self.tables['prices'], graph_params=graph_params)
         
         # If the entry is Parabolic SAR
