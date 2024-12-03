@@ -86,7 +86,7 @@ class GraphData():
 
 
     @staticmethod
-    def _bar_color(
+    def bar_color(
         price_data: pd.Series,
         color1: str,
         color2: str) -> np.ndarray:
@@ -138,7 +138,7 @@ class GraphData():
         signal_dict = {}
         signal_dict['data_markers'] = {}
 
-        upper, lower = cls._set_upper_lower(graph_params=graph_params)
+        upper, lower = cls.set_upper_lower(graph_params=graph_params)
 
         buy_sell_distance = 0.10 * (upper - lower) # 0.07
         flat_distance = 0.15 * (upper - lower) # 0.1
@@ -266,8 +266,25 @@ class GraphData():
 
 
     @staticmethod
-    def _set_upper_lower(
+    def set_upper_lower(
         graph_params: dict) -> tuple[float, float]:
+        """
+        Set Upper and Lower bounds for plotting trading signals
+
+        Parameters
+        ----------
+        lower_bound : Pandas Series
+            Lower point to set where trading signals are plotted from.
+        upper_bound : Pandas Series
+            Upper point to set where trading signals are plotted from.
+
+        Returns
+        -------
+        lower: float
+            Lower point to set where trading signals are plotted from.
+        upper: Float
+            Upper point to set where trading signals are plotted from.
+        """
         # Set upper to the max of the upper bound and lower to the lowest
         # non-zero value of the lower bound, stripping zeros and nan values
 
