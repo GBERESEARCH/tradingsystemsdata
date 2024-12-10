@@ -44,8 +44,17 @@ class GraphData():
         # Set the dates to the index of the main DataFrame
         graph_params['dates'] = prices.index
 
-        # Closing Prices
+        # Add Price & Volume data
         graph_params['price'] = prices['Close']
+        graph_params['Open'] = prices['Open']
+        graph_params['High'] = prices['High']
+        graph_params['Low'] = prices['Low']
+        graph_params['Close'] = prices['Close']
+        try:
+            graph_params['Volume'] = prices['Volume']
+        except:
+            pass    
+
 
         # MTM Equity
         graph_params['equity'] = prices['mtm_equity']
