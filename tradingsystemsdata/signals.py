@@ -250,7 +250,12 @@ class Signals():
             tables['prices'], start, \
                 signal = IndicatorEntry.entry_macd(
                     tables['prices'],
-                    macd_params=params['macd_params'])
+                    macd_params=(
+                        params['fast_ma'], 
+                        params['slow_ma'], 
+                        params['signal_smooth']
+                        )
+                    )
 
         # Commodity Channel Index
         elif params['entry_type'] == 'cci':
