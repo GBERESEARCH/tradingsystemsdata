@@ -48,8 +48,8 @@ class MovingAverageEntry():
         if simple_ma:
 
             # Create short and long simple moving averages
-            ma_1 = prices['Close'].rolling(ma1).mean()
-            ma_2 = prices['Close'].rolling(ma2).mean()
+            ma_1 = prices['Close'].rolling(ma1+'D').mean()
+            ma_2 = prices['Close'].rolling(ma2+'D').mean()
 
         else:
             # Create short and long exponential moving averages
@@ -151,9 +151,9 @@ class MovingAverageEntry():
 
         # Create fast, medium and slow simple moving averages
         if simple_ma:
-            ma_1 = prices['Close'].rolling(ma1).mean()
-            ma_2 = prices['Close'].rolling(ma2).mean()
-            ma_3 = prices['Close'].rolling(ma3).mean()
+            ma_1 = prices['Close'].rolling(ma1+'D').mean()
+            ma_2 = prices['Close'].rolling(ma2+'D').mean()
+            ma_3 = prices['Close'].rolling(ma3+'D').mean()
 
         else:
             ma_1 = Indicators.EMA(
@@ -272,10 +272,10 @@ class MovingAverageEntry():
 
         # Create the 4 simple moving averages
         if simple_ma:
-            ma_1 = prices['Close'].rolling(ma1).mean()
-            ma_2 = prices['Close'].rolling(ma2).mean()
-            ma_3 = prices['Close'].rolling(ma3).mean()
-            ma_4 = prices['Close'].rolling(ma4).mean()
+            ma_1 = prices['Close'].rolling(ma1+'D').mean()
+            ma_2 = prices['Close'].rolling(ma2+'D').mean()
+            ma_3 = prices['Close'].rolling(ma3+'D').mean()
+            ma_4 = prices['Close'].rolling(ma4+'D').mean()
 
         else:
             ma_1 = Indicators.EMA(
