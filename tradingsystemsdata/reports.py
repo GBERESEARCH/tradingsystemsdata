@@ -946,7 +946,11 @@ class PerfReport():
             if type(value) in (float, np.float64):
 
                 # Apply the decimal formatting and convert to string
-                str_input_dict[key] = str(Decimal(value).quantize(dp2))
+                try:
+                    str_input_dict[key] = str(Decimal(value).quantize(dp2))
+                except:
+                    print("Problem with Decimal: ", value)
+                    str_input_dict[key] = str(value)
             else:
 
                 # Otherwise just convert to string
