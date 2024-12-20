@@ -41,6 +41,9 @@ class GraphData():
         # Dictionary to store default params
         graph_params = {}
 
+        # Remove nan values from prices DataFrame
+        prices = prices.bfill()
+
         # Set the dates to the index of the main DataFrame
         graph_params['dates'] = prices.index
 
