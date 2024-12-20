@@ -3,10 +3,10 @@ Dictionary containing all the default parameters
 """
 
 system_params_dict = {
-    'df_profit_factor':2,
-    'df_profit_bars':2,
-    'df_stop_bars':2,
-    'df_exit_factor':2,
+    # 'df_profit_factor':2,
+    # 'df_profit_bars':2,
+    # 'df_stop_bars':2,
+    # 'df_exit_factor':2,
     'df_equity':100000.00,
     'df_ticker':'$SPX',
     'df_bench_ticker':'$SPX',
