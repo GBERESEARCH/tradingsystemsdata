@@ -526,7 +526,7 @@ class TestStrategy():
                 if params['entry_type'] == '4ma':
                     ma_4 = tables['prices'][es_dict[
                         'entry_signal_indicators'][params[
-                            'entry_type']][2]]
+                            'entry_type']][3]]
                 
                     indicators['ma_4'] = ma_4
 
