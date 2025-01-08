@@ -270,7 +270,10 @@ class Positions():
 
         # Get the date of the first trade
         trades = prices['raw_trade_number']
-        params['first_trade_date'] = trades.loc[trades != 0].index[0]
+        try:
+            params['first_trade_date'] = trades.loc[trades != 0].index[0]
+        except:
+            print("No trades to calculate")
 
         # Find the location of the start of the first trade
         params['first_trade_start'] = prices.index.get_loc(
@@ -378,20 +381,20 @@ class Positions():
             if trade_number.iat[row] != 0:
 
                 # Set the position size series to the number of units
-                prices['position_size'][row] = units
+                prices['position_size'].iloc[row] = units
 
                 # Set the position size for the perfect profit calc to the
                 # same as the position size
-                prices['position_size_pp'][row] = prices['position_size'].iat[row]
+                prices['position_size_pp'].iloc[row] = prices['position_size'].iat[row]
 
             # If there is no trade on
             else:
                 # Set the position size to zero
-                prices['position_size'][row] = 0
+                prices['position_size'].iloc[row] = 0
 
                 # Set the position size for the perfect profit calc to the
                 # same as the previous day
-                prices['position_size_pp'][row] = prices[
+                prices['position_size_pp'].iloc[row] = prices[
                     'position_size_pp'].iloc[row-1]
 
         return prices, params
@@ -420,27 +423,27 @@ class Positions():
 
                     # Set the number of units to use a percentage of starting
                     # equity at the point when trade signals begin
-                    prices['position_size'][row] = math.ceil(
+                    prices['position_size'].iloc[row] = math.ceil(
                         (params['equity'] / prices['Close'].iat[row])
                         * params['equity_inv_perc']
                         / params['contract_point_value'])
 
                 # For every other day in the trade take the entry size
                 else:
-                    prices['position_size'][row] = prices[
+                    prices['position_size'].iloc[row] = prices[
                         'position_size'].iloc[row-1]
 
                 # Set the position size for the perfect profit calc to the
                 # same as the position size
-                prices['position_size_pp'][row] = prices['position_size'].iat[row]
+                prices['position_size_pp'].iloc[row] = prices['position_size'].iat[row]
 
             # If there is no trade on, set the position size to zero.
             else:
-                prices['position_size'][row] = 0
+                prices['position_size'].iloc[row] = 0
 
                 # Set the position size for the perfect profit calc to the
                 # same as the previous day
-                prices['position_size_pp'][row] = prices[
+                prices['position_size_pp'].iloc[row] = prices[
                     'position_size_pp'].iloc[row-1]
 
         return prices, params
@@ -485,7 +488,7 @@ class Positions():
                     (params['equity'] * params['margin_%'])
                     / prices['Close'].iat[row])
 
-            # If the is a trade on
+            # If there is a trade on
             if trade_number.iat[row] != 0:
 
                 # Get the index location of the trade entry date
@@ -497,20 +500,22 @@ class Positions():
 
                     # If we can calculate the ATR
                     #if row > params['atr_pos_size']:
+                    try:
+                        # Size the position for each trade based on a fraction
+                        # of the ATR
+                        prices['position_size'].iat[row] = min(math.ceil(
+                            (params['equity'] * (params['position_risk_bps']
+                                                / 10000))
+                            / (prices['position_ATR'].iat[row]
+                            * params['contract_point_value'])),
+                            max_contracts[row])
 
-                    # Size the position for each trade based on a fraction
-                    # of the ATR
-                    prices['position_size'].iat[row] = min(math.ceil(
-                        (params['equity'] * (params['position_risk_bps']
-                                             / 10000))
-                        / (prices['position_ATR'].iat[row]
-                           * params['contract_point_value'])),
-                        max_contracts[row])
-
+                    except:
                     # Otherwise
+                        print("Problem with: ", prices['position_ATR'].iat[row], "Position ATR row:",row)
                     #else:
                         # Set the position size to 1
-                    #    prices['position_size'][row] = 1
+                        prices['position_size'].iat[row] = 1
 
                 # For every other day in the trade take the entry size
                 else:
@@ -550,13 +555,13 @@ class Positions():
 
             # If the is a trade on
             if trade_number.iat[row] != 0:
-                prices['position_size'][row] = units
+                prices['position_size'].iloc[row] = units
 
             # If there is no trade on
             else:
-                prices['position_size'][row] = 0
+                prices['position_size'].iloc[row] = 0
 
             # Set position size for perfect profit calculation
-            prices['position_size_pp'][row] = units
+            prices['position_size_pp'].iloc[row] = units
 
         return prices, params
