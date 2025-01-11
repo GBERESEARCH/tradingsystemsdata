@@ -143,7 +143,7 @@ class Positions():
                 # closed out
                 if ((end_of_day_position[row] == 0) and (
                         prices['trade_number'].iat[row] == prices[
-                            'trade_number'].iloc[row-1])):
+                            'trade_number'].iat[row-1])):
 
                     # Set the initial position value to the same as the
                     # previous day
@@ -153,7 +153,7 @@ class Positions():
                     # multiplied by the end of day position of the previous day
                     current_position_value[row] = (
                         prices['Open'].iat[row] *
-                        end_of_day_position.iloc[row-1]
+                        end_of_day_position.iat[row-1]
                         )
 
                     # Set the maximum trade position value to the same as the
@@ -340,8 +340,6 @@ class Positions():
         # Set the position size series to the number of units, starting from
         # the point that trade signals can be generated
         bench_start = benchmark.index.get_loc(params['benchmark_start_date'])
-        # benchmark['benchmark_position_size'].iloc[
-        #     bench_start:] = benchmark_units
         benchmark.loc[
             benchmark.index[bench_start], 
             'benchmark_position_size'
@@ -381,21 +379,21 @@ class Positions():
             if trade_number.iat[row] != 0:
 
                 # Set the position size series to the number of units
-                prices['position_size'].iloc[row] = units
+                prices['position_size'].iat[row] = units
 
                 # Set the position size for the perfect profit calc to the
                 # same as the position size
-                prices['position_size_pp'].iloc[row] = prices['position_size'].iat[row]
+                prices['position_size_pp'].iat[row] = prices['position_size'].iat[row]
 
             # If there is no trade on
             else:
                 # Set the position size to zero
-                prices['position_size'].iloc[row] = 0
+                prices['position_size'].iat[row] = 0
 
                 # Set the position size for the perfect profit calc to the
                 # same as the previous day
-                prices['position_size_pp'].iloc[row] = prices[
-                    'position_size_pp'].iloc[row-1]
+                prices['position_size_pp'].iat[row] = prices[
+                    'position_size_pp'].iat[row-1]
 
         return prices, params
 
@@ -423,28 +421,28 @@ class Positions():
 
                     # Set the number of units to use a percentage of starting
                     # equity at the point when trade signals begin
-                    prices['position_size'].iloc[row] = math.ceil(
+                    prices['position_size'].iat[row] = math.ceil(
                         (params['equity'] / prices['Close'].iat[row])
                         * params['equity_inv_perc']
                         / params['contract_point_value'])
 
                 # For every other day in the trade take the entry size
                 else:
-                    prices['position_size'].iloc[row] = prices[
-                        'position_size'].iloc[row-1]
+                    prices['position_size'].iat[row] = prices[
+                        'position_size'].iat[row-1]
 
                 # Set the position size for the perfect profit calc to the
                 # same as the position size
-                prices['position_size_pp'].iloc[row] = prices['position_size'].iat[row]
+                prices['position_size_pp'].iat[row] = prices['position_size'].iat[row]
 
             # If there is no trade on, set the position size to zero.
             else:
-                prices['position_size'].iloc[row] = 0
+                prices['position_size'].iat[row] = 0
 
                 # Set the position size for the perfect profit calc to the
                 # same as the previous day
-                prices['position_size_pp'].iloc[row] = prices[
-                    'position_size_pp'].iloc[row-1]
+                prices['position_size_pp'].iat[row] = prices[
+                    'position_size_pp'].iat[row-1]
 
         return prices, params
 
@@ -520,7 +518,7 @@ class Positions():
                 # For every other day in the trade take the entry size
                 else:
                     prices['position_size'].iat[row] = prices[
-                        'position_size'].iloc[row-1]
+                        'position_size'].iat[row-1]
 
                 # Set the position size for the perfect profit calc to the
                 # same as the position size
@@ -535,7 +533,7 @@ class Positions():
                 # Set the position size for the perfect profit calc to the
                 # same as the previous day
                 prices['position_size_pp'].iat[row] = prices[
-                    'position_size_pp'].iloc[row-1]
+                    'position_size_pp'].iat[row-1]
 
         return prices, params
 
@@ -555,13 +553,16 @@ class Positions():
 
             # If the is a trade on
             if trade_number.iat[row] != 0:
-                prices['position_size'].iloc[row] = units
+                prices['position_size'].iat[row] = units
+                #prices.loc[row, 'position_size'] = units
 
             # If there is no trade on
             else:
-                prices['position_size'].iloc[row] = 0
+                prices['position_size'].iat[row] = 0
+                # prices.loc[row, 'position_size'] = 0
 
             # Set position size for perfect profit calculation
-            prices['position_size_pp'].iloc[row] = units
+            prices['position_size_pp'].iat[row] = units
+            #prices.loc[row, 'position_size_pp'] = units
 
         return prices, params
