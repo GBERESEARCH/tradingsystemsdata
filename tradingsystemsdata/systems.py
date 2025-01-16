@@ -480,11 +480,14 @@ class TestStrategy():
         
         indicators = cls._get_indicators(
             params=params, tables=tables, es_dict=es_dict)
+        
+        trade_data = cls._get_trades(tables=tables)
 
         params['es_dict'] = es_dict
         params['graph_params'] = graph_params
         params['signal_dict'] = signal_dict
         params['indicators'] = indicators        
+        params['trade_data'] = trade_data        
 
         return params
     
@@ -631,6 +634,37 @@ class TestStrategy():
             indicators['volatility'] = volatility
 
         return indicators    
+    
+    @staticmethod
+    def _get_trades(tables):
+        prices = tables['prices']
+        trade_data = {
+            'entry_dates': [],
+            'entry_prices': [],
+            'exit_dates': [],
+            'exit_prices': [],
+            'position_sizes': [],
+            'profits': []
+            }
+
+        for row in range(1, len(prices)):
+            if prices['raw_trade_number'].iloc[row] > prices['raw_trade_number'].iloc[row-1]:
+                trade_data['entry_dates'].append(str(prices.index[row].date()))
+                trade_data['entry_prices'].append(float(prices['Open'].iloc[row]))
+            if ((prices['trade_number'].iloc[row] == 0 
+                 and prices['trade_number'].iloc[row-1] !=0)
+                or (prices['trade_number'].iloc[row] != 0 
+                    and prices['trade_number'].iloc[row-1] !=0 
+                    and (prices['trade_number'].iloc[row] > prices['trade_number'].iloc[row-1]))):
+                trade_data['exit_dates'].append(str(prices.index[row-1].date()))
+                trade_data['exit_prices'].append(
+                    float(prices['Open'].iloc[row-1]))
+                trade_data['position_sizes'].append(
+                    int(prices['end_of_day_position'].iloc[row-2]))
+                trade_data['profits'].append(
+                    float(prices['cumulative_trade_pnl'].iloc[row-1]))
+
+        return trade_data 
 
 
 class TestPortfolio():
