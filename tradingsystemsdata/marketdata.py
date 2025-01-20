@@ -55,23 +55,23 @@ class Markets():
         # Extract data from Norgate
         if source == 'norgate':
             prices = NorgateFunctions.return_norgate_data(
-                ticker=ticker, params=params)
+                ticker=ticker, params=params) #type: ignore
 
         # Extract data from Yahoo Finance
         elif source == 'yahoo':
             prices = cls.return_yahoo_data(
-                ticker=ticker, params=params)
+                ticker=ticker, params=params) #type: ignore
 
         # Extract data from AlphaVantage
         elif source == 'alpha':
             prices = cls.return_alphavantage_data(
-                ticker=ticker, params=params)
+                ticker=ticker, params=params) #type: ignore
 
         else:
             raise ValueError(
                 'Select a data source from yahoo, norgate or alpha')
 
-        return prices, params
+        return prices, params #type: ignore
 
 
     @classmethod
@@ -211,7 +211,7 @@ class Markets():
 
         # Set API key
         if params['api_key'] == '':
-            params['api_key'] = os.getenv('ALPHAVANTAGE_API_KEY')
+            params['api_key'] = str(os.getenv('ALPHAVANTAGE_API_KEY'))
 
         # FX pair
         if params['asset_type'] == 'fx':
@@ -230,7 +230,7 @@ class Markets():
         # Equity Single stock or Index
         elif params['asset_type'] == 'equity':
             prices = cls._alphavantage_equity(
-                ticker=ticker, api_key=params['api_key'])
+                ticker=ticker, api_key=params['api_key']) #type: ignore
 
         # Otherwise raise an error
         else:
@@ -355,10 +355,12 @@ class Markets():
         base_url = 'https://www.alphavantage.co/query?'
 
         # Set crypto params
-        params = {'function': 'DIGITAL_CURRENCY_DAILY',
-                  'symbol': ccy_1,
-                  'market': ccy_2,
-                  'apikey': api_key}
+        params = {
+            'function': 'DIGITAL_CURRENCY_DAILY',
+            'symbol': ccy_1,
+            'market': ccy_2,
+            'apikey': api_key
+            }
 
         response = requests.get(base_url, params=params, timeout=10)
         response_dict = response.json()
@@ -409,10 +411,12 @@ class Markets():
         base_url = 'https://www.alphavantage.co/query?'
 
         # Set equity params
-        params = {'function': 'TIME_SERIES_DAILY_ADJUSTED',
-                  'symbol': ticker,
-                  'outputsize':'full',
-                  'apikey': api_key}
+        params = {
+            'function': 'TIME_SERIES_DAILY_ADJUSTED',
+            'symbol': ticker,
+            'outputsize':'full',
+            'apikey': api_key
+            }
 
         response = requests.get(base_url, params=params, timeout=10)
         response_dict = response.json()
@@ -492,7 +496,7 @@ class NorgateFunctions():
             end_date=params['end_date'],
             format=timeseriesformat)
 
-        return prices
+        return prices #type: ignore
 
 
     @staticmethod
@@ -518,6 +522,8 @@ class NorgateFunctions():
             Dictionary of key parameters.
 
         """
+        
+
         import norgatedata
         if ticker[0] == '&':
             if ticker[-4:] == '_CCB':

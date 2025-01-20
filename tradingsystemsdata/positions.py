@@ -124,6 +124,11 @@ class Positions():
 
         """
 
+        trade_number = np.array(prices['trade_number'])
+        eod_position = np.array(end_of_day_position)
+        open = np.array(prices['Open'])
+        close = np.array(prices['Close'])
+
         # Create a empty arrays to store the signals
         initial_position_value = np.array([0]*len(prices))
         current_position_value = np.array([0]*len(prices))
@@ -136,14 +141,13 @@ class Positions():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if prices['trade_number'][row] != 0:
+            if trade_number[row] != 0:
 
                 # If the end of day position is flat and the trade number is
                 # the same as the previous day - i.e. the trade has just been
                 # closed out
-                if ((end_of_day_position[row] == 0) and (
-                        prices['trade_number'].iat[row] == prices[
-                            'trade_number'].iat[row-1])):
+                if ((eod_position[row] == 0) and (
+                        trade_number[row] == trade_number[row-1])):
 
                     # Set the initial position value to the same as the
                     # previous day
@@ -152,8 +156,7 @@ class Positions():
                     # Set the current position value to the opening price
                     # multiplied by the end of day position of the previous day
                     current_position_value[row] = (
-                        prices['Open'].iat[row] *
-                        end_of_day_position.iat[row-1]
+                        open[row] * eod_position[row-1]
                         )
 
                     # Set the maximum trade position value to the same as the
@@ -181,40 +184,39 @@ class Positions():
                     # multiplied by the end of day position
                     initial_position_value[row] = (
                         trade_price_dict['trade_entry_price'][row]
-                        * end_of_day_position.iat[row])
+                        * eod_position[row])
 
                     # Set the current position value to the closing price
                     # multiplied by the end of day position
                     current_position_value[row] = (
-                        prices['Close'].iat[row] *
-                        end_of_day_position.iat[row]
+                        close[row] * eod_position[row]
                         )
 
                     # Set the maximum trade position value to the high price of
                     # the trade multiplied by the end of day position
                     max_trade_position_value[row] = (
                         trade_price_dict['trade_high_price'][row]
-                        * end_of_day_position.iat[row])
+                        * eod_position[row])
 
                     # Set the maximum trade closing position value to the
                     # highest closing price of the trade multiplied by the end
                     # of day position
                     max_trade_close_position_value[row] = (
                         trade_price_dict['trade_close_high_price'][row]
-                        * end_of_day_position.iat[row])
+                        * eod_position[row])
 
                     # Set the minimum trade position value to the low price of
                     # the trade multiplied by the end of day position
                     min_trade_position_value[row] = (
                         trade_price_dict['trade_low_price'][row]
-                        * end_of_day_position.iat[row])
+                        * eod_position[row])
 
                     # Set the minimum trade closing position value to the
                     # lowest closing price of the trade multiplied by the end
                     # of day position
                     min_trade_close_position_value[row] = (
                         trade_price_dict['trade_close_low_price'][row]
-                        * end_of_day_position.iat[row])
+                        * eod_position[row])
 
         # Collect results in dictionary
         pos_val_dict = {}
@@ -359,7 +361,9 @@ class Positions():
         params: dict) -> tuple[pd.DataFrame, dict]:
 
         # Extract the raw trade signal from the OHLC data
-        trade_number = prices['raw_trade_number']
+        trade_number = np.array(prices['raw_trade_number'])
+        position_size = np.array(prices['position_size'])
+        position_size_pp = np.array(prices['position_size_pp'])
 
         # Set the position size to the number of shares that can be
         # bought with the initial equity
@@ -376,24 +380,26 @@ class Positions():
         for row in range(params['first_trade_start'], len(prices['Close'])):
 
             # If the is a trade on
-            if trade_number.iat[row] != 0:
+            if trade_number[row] != 0:
 
                 # Set the position size series to the number of units
-                prices['position_size'].iat[row] = units
+                position_size[row] = units
 
                 # Set the position size for the perfect profit calc to the
                 # same as the position size
-                prices['position_size_pp'].iat[row] = prices['position_size'].iat[row]
+                position_size_pp[row] = position_size[row]
 
             # If there is no trade on
             else:
                 # Set the position size to zero
-                prices['position_size'].iat[row] = 0
+                position_size[row] = 0
 
                 # Set the position size for the perfect profit calc to the
                 # same as the previous day
-                prices['position_size_pp'].iat[row] = prices[
-                    'position_size_pp'].iat[row-1]
+                position_size_pp[row] = position_size_pp[row-1]
+
+        prices['position_size'] = position_size
+        prices['position_size_pp'] = position_size_pp
 
         return prices, params
 
@@ -404,45 +410,49 @@ class Positions():
         params: dict) -> tuple[pd.DataFrame, dict]:
 
         # Extract the raw trade signal from the OHLC data
-        trade_number = prices['raw_trade_number']
+        trade_number = np.array(prices['raw_trade_number'])
+        position_size = np.array(prices['position_size'])
+        position_size_pp = np.array(prices['position_size_pp'])
+        close = np.array(prices['Close'])
 
         # For each row since the first trade entry
         for row in range(params['first_trade_start'], len(prices['Close'])):
 
             # If the is a trade on
-            if trade_number.iat[row] != 0:
+            if trade_number[row] != 0:
 
                 # Get the index location of the trade entry date
                 trade_first_row = prices.index.get_loc(
-                    prices[trade_number==trade_number.iat[row]].index[0])
+                    prices[trade_number==trade_number[row]].index[0])
 
                 # If it is the trade entry date
                 if row == trade_first_row:
 
                     # Set the number of units to use a percentage of starting
                     # equity at the point when trade signals begin
-                    prices['position_size'].iat[row] = math.ceil(
-                        (params['equity'] / prices['Close'].iat[row])
+                    position_size[row] = math.ceil(
+                        (params['equity'] / close[row])
                         * params['equity_inv_perc']
                         / params['contract_point_value'])
 
                 # For every other day in the trade take the entry size
                 else:
-                    prices['position_size'].iat[row] = prices[
-                        'position_size'].iat[row-1]
+                    position_size[row] = position_size[row-1]
 
                 # Set the position size for the perfect profit calc to the
                 # same as the position size
-                prices['position_size_pp'].iat[row] = prices['position_size'].iat[row]
+                position_size_pp[row] = position_size[row]
 
             # If there is no trade on, set the position size to zero.
             else:
-                prices['position_size'].iat[row] = 0
+                position_size[row] = 0
 
                 # Set the position size for the perfect profit calc to the
                 # same as the previous day
-                prices['position_size_pp'].iat[row] = prices[
-                    'position_size_pp'].iat[row-1]
+                position_size_pp = position_size_pp[row-1]
+                
+        prices['position_size'] = position_size
+        prices['position_size_pp'] = position_size_pp
 
         return prices, params
 
@@ -453,22 +463,25 @@ class Positions():
         params: dict) -> tuple[pd.DataFrame, dict]:
 
         # Calculate ATR levels
-        prices['position_ATR'] = Indicators.ATR(
+        position_ATR = Indicators.ATR(
             prices['High'], prices['Low'], prices['Close'],
             params['atr_pos_size'])
 
         # Replace nan values with difference between high and low prices
-        prices['position_ATR'] = np.where(
-            np.isnan(prices['position_ATR']),
+        position_ATR = np.where(
+            np.isnan(position_ATR),
             prices['High'] - prices['Low'],
-            prices['position_ATR'])
+            position_ATR)
 
         #if np.isnan(prices['position_ATR'][row]):
         #    prices['position_ATR'][row] = (
         #        prices['High'][row] - prices['Low'][row])
 
         # Extract the raw trade signal from the OHLC data
-        trade_number = prices['raw_trade_number']
+        position_size = np.array(prices['position_size'])
+        position_size_pp = np.array(prices['position_size_pp'])
+        trade_number = np.array(prices['raw_trade_number'])
+        close = np.array(prices['Close'])
 
         max_contracts = np.array(
             [0] * len(prices['Close']), dtype=int)
@@ -484,14 +497,14 @@ class Positions():
             else:
                 max_contracts[row] = math.ceil(
                     (params['equity'] * params['margin_%'])
-                    / prices['Close'].iat[row])
+                    / close[row])
 
             # If there is a trade on
-            if trade_number.iat[row] != 0:
+            if trade_number[row] != 0:
 
                 # Get the index location of the trade entry date
                 trade_first_row = prices.index.get_loc(
-                    prices[trade_number==trade_number.iat[row]].index[0])
+                    prices[trade_number==trade_number[row]].index[0])
 
                 # If it is the trade entry date
                 if row == trade_first_row:
@@ -501,39 +514,45 @@ class Positions():
                     try:
                         # Size the position for each trade based on a fraction
                         # of the ATR
-                        prices['position_size'].iat[row] = min(math.ceil(
+                        position_size[row] = min(math.ceil(
                             (params['equity'] * (params['position_risk_bps']
                                                 / 10000))
-                            / (prices['position_ATR'].iat[row]
+                            / (position_ATR[row]
                             * params['contract_point_value'])),
                             max_contracts[row])
 
                     except:
                     # Otherwise
-                        print("Problem with: ", prices['position_ATR'].iat[row], "Position ATR row:",row)
+                        print(
+                            "Problem with: ", 
+                            position_ATR[row], 
+                            "Position ATR row:",
+                            row
+                            )
                     #else:
                         # Set the position size to 1
-                        prices['position_size'].iat[row] = 1
+                        position_size[row] = 1
 
                 # For every other day in the trade take the entry size
                 else:
-                    prices['position_size'].iat[row] = prices[
-                        'position_size'].iat[row-1]
+                    position_size[row] = position_size[row-1]
 
                 # Set the position size for the perfect profit calc to the
                 # same as the position size
-                prices['position_size_pp'].iat[row] = prices[
-                    'position_size'].iat[row]
+                position_size_pp[row] = position_size[row]
 
             # If there is no trade on
             else:
                 # Set the position size to zero.
-                prices['position_size'].iat[row] = 0
+                position_size[row] = 0
 
                 # Set the position size for the perfect profit calc to the
                 # same as the previous day
-                prices['position_size_pp'].iat[row] = prices[
-                    'position_size_pp'].iat[row-1]
+                position_size_pp[row] = position_size_pp[row-1]
+
+        prices['position_size'] = position_size
+        prices['position_size_pp'] = position_size_pp
+        prices['position_ATR'] = position_ATR
 
         return prices, params
 
@@ -544,25 +563,30 @@ class Positions():
         params: dict) -> tuple[pd.DataFrame, dict]:
 
         # Extract the raw trade signal from the OHLC data
-        trade_number = prices['raw_trade_number']
-
+        position_size = np.array(prices['position_size'])
+        position_size_pp = np.array(prices['position_size_pp'])
+        trade_number = np.array(prices['raw_trade_number'])
+   
         units = params['fixed_pos_size']
 
         # For each row since the first trade entry
         for row in range(params['first_trade_start'], len(prices['Close'])):
 
             # If the is a trade on
-            if trade_number.iat[row] != 0:
-                prices['position_size'].iat[row] = units
+            if trade_number[row] != 0:
+                position_size[row] = units
                 #prices.loc[row, 'position_size'] = units
 
             # If there is no trade on
             else:
-                prices['position_size'].iat[row] = 0
+                position_size[row] = 0
                 # prices.loc[row, 'position_size'] = 0
 
             # Set position size for perfect profit calculation
-            prices['position_size_pp'].iat[row] = units
+            position_size_pp[row] = units
             #prices.loc[row, 'position_size_pp'] = units
+
+        prices['position_size'] = position_size
+        prices['position_size_pp'] = position_size_pp
 
         return prices, params

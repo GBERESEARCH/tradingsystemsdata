@@ -72,11 +72,11 @@ class GraphData():
 
             # Set the lower bound as rolling low close prices
             graph_params['lower_bound'] = prices[
-                entry_signal_indicators[entry_type][0]]
+                entry_signal_indicators[entry_type][0]] #type: ignore
 
             # Set the upper bound as rolling high close prices
             graph_params['upper_bound'] = prices[
-                entry_signal_indicators[entry_type][1]]
+                entry_signal_indicators[entry_type][1]] #type: ignore
 
         elif entry_type in ['2ma', '3ma', '4ma']:
 
@@ -120,7 +120,7 @@ class GraphData():
             Series of colors for each data point.
 
         """
-        return np.where(price_data.values > 0, color1, color2).T
+        return np.where(price_data.values > 0, color1, color2).T #type: ignore
 
 
     @classmethod

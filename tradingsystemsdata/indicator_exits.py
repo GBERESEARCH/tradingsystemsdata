@@ -49,16 +49,16 @@ class IndicatorExit():
 
         """
 
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # Extract high, low and close series from the DataFrame
-        high = prices['High']
-        low = prices['Low']
+        high = np.array(prices['High'])
+        low = np.array(prices['Low'])
 
         # Calculate rolling min and max closing prices based on time period
-        rolling_high = prices['High'].rolling(time_period).max()
-        rolling_low = prices['Low'].rolling(time_period).min()
+        rolling_high = np.array(prices['High'].rolling(time_period).max())
+        rolling_low = np.array(prices['Low'].rolling(time_period).min())
 
         # Initialize zero arrays to store data
         sar = np.array([0.0]*len(prices))
@@ -72,78 +72,78 @@ class IndicatorExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # Find the row that relates to the trade entry
                 trade_first_row = prices.index.get_loc(
-                    prices[trade_number==trade_number.iloc[row]].index[0])
-                trade_row_num = row - trade_first_row
+                    prices[trade_number==trade_number[row]].index[0])
+                trade_row_num = row - trade_first_row #type: ignore
 
                 # If it is the trade entry day
                 if trade_row_num == 0:
 
                     # If it is the first trade in the data
-                    if trade_number.iloc[row] == 1:
+                    if trade_number[row] == 1:
 
                         # If there is a long position
-                        if end_of_day_position.iloc[row] > 0:
+                        if end_of_day_position[row] > 0:
 
                             # Set the initial point to the n-day low
-                            initial_point = rolling_low.iloc[row]
+                            initial_point = rolling_low[row]
 
                             # Set the extreme price to the day's high
-                            extreme_price[row] = high.iloc[row]
+                            extreme_price[row] = high[row]
 
                         # If there is a short position
-                        elif end_of_day_position.iloc[row] < 0:
+                        elif end_of_day_position[row] < 0:
 
                             # Set the initial point to the n-day high
-                            initial_point = rolling_high.iloc[row]
+                            initial_point = rolling_high[row]
 
                             # Set the extreme price to the day's low
-                            extreme_price[row] = low.iloc[row]
+                            extreme_price[row] = low[row]
 
                     # For every other trade
                     else:
                         # If there is a long position
-                        if end_of_day_position.iloc[row] > 0:
+                        if end_of_day_position[row] > 0:
 
                             # If the sip_price flag is True
                             if sip_price:
 
                                 # Set the initial point to the n-day low close
-                                initial_point = rolling_low.iloc[row]
+                                initial_point = rolling_low[row]
 
                             # If the sip_price flag is False
                             else:
                                 # Set the initial point to the previous trade
                                 # low
                                 initial_point = min(
-                                    prices[trade_number==trade_number.iloc[
+                                    prices[trade_number==trade_number[
                                         row]-1]['Low'])
 
                             # Set the extreme price to the day's high
-                            extreme_price[row] = high.iloc[row]
+                            extreme_price[row] = high[row]
 
                         # If there is a short position
-                        elif end_of_day_position.iloc[row] < 0:
+                        elif end_of_day_position[row] < 0:
 
                             # If the sip_price flag is True
                             if sip_price:
 
                                 # Set the initial point to the n-day low close
-                                initial_point = rolling_high.iloc[row]
+                                initial_point = rolling_high[row]
 
                             # If the sip_price flag is False
                             else:
                                 # Set the initial point to the previous trade
                                 # high
                                 initial_point = max(
-                                    prices[trade_number==trade_number.iloc[
+                                    prices[trade_number==trade_number[
                                         row]-1]['High'])
 
                                 # Set the extreme price to the day's high
-                                extreme_price[row] = low.iloc[row]
+                                extreme_price[row] = low[row]
 
                         # Set the sar to the initial point
                         sar[row] = initial_point
@@ -155,12 +155,12 @@ class IndicatorExit():
                 # If it is not the trade entry day
                 else:
                     # If the previous day was long
-                    if end_of_day_position.iloc[row-1] == 1:
+                    if end_of_day_position[row-1] == 1:
 
                         # If the previous day's sar was greater than the
                         # previous day's
                         # low
-                        if sar[row-1] > low.iloc[row-1]:
+                        if sar[row-1] > low[row-1]:
 
                             # Set the signal to exit
                             parabolic_sar_exit[row-1] = -1
@@ -174,11 +174,11 @@ class IndicatorExit():
                         # extreme price and the sar is greater than the lowest
                         # low of the previous 2 days
                         elif (sar[row-1] + af_x_diff[row-1]
-                            > min(low.iloc[row-1], low.iloc[row-2])):
+                            > min(low[row-1], low[row-2])):
 
                             # Set the sar to the lowest low of the previous 2
                             # days
-                            sar[row] = min(low.iloc[row-1], low.iloc[row-2])
+                            sar[row] = min(low[row-1], low[row-2])
 
                         # Otherwise
                         else:
@@ -188,10 +188,10 @@ class IndicatorExit():
                             sar[row] = sar[row-1] + af_x_diff[row-1]
 
                     # Otherwise if the previous day was short
-                    elif end_of_day_position.iloc[row-1] == -1:
+                    elif end_of_day_position[row-1] == -1:
                         # If the previous day's sar was less than the previous
                         # day's high
-                        if sar[row-1] < high.iloc[row-1]:
+                        if sar[row-1] < high[row-1]:
 
                             # Set the signal to exit
                             parabolic_sar_exit[row-1] = 1
@@ -205,11 +205,11 @@ class IndicatorExit():
                         # extreme price and the sar is less than the highest
                         # high of the previous 2 days
                         elif (sar[row-1] - af_x_diff[row-1]
-                            < max(high.iloc[row-1], high.iloc[row-2])):
+                            < max(high[row-1], high[row-2])):
 
                             # Set the sar to the highest high of the previous
                             # 2 days
-                            sar[row] = max(high.iloc[row-1], high.iloc[row-2])
+                            sar[row] = max(high[row-1], high[row-2])
 
                         # Otherwise
                         else:
@@ -219,12 +219,12 @@ class IndicatorExit():
                             sar[row] = sar[row-1] - af_x_diff[row-1]
 
                 # If the current trade direction is long
-                if end_of_day_position.iloc[row] == 1:
+                if end_of_day_position[row] == 1:
 
                     # Set the extreme price to the greater of the previous
                     # day's extreme price and the current day's high
                     extreme_price[row] = max(
-                        extreme_price[row-1], high.iloc[row])
+                        extreme_price[row-1], high[row])
 
                     # If the trade is making a new high
                     if extreme_price[row] > extreme_price[row-1]:
@@ -245,7 +245,7 @@ class IndicatorExit():
                     # Set the extreme price to the lesser of the previous day's
                     # extreme price and the current day's low
                     extreme_price[row] = min(
-                        extreme_price[row-1], low.iloc[row])
+                        extreme_price[row-1], low[row])
 
                     # If the trade is making a new low
                     if extreme_price[row] < extreme_price[row-1]:
@@ -315,9 +315,9 @@ class IndicatorExit():
             The exit signals.
 
         """
-
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+        close = np.array(prices['Close'])
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # Calculate RSI
         rsi = Indicators.RSI(close=prices['Close'], time_period=time_period)
@@ -329,26 +329,25 @@ class IndicatorExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # If there is a long position
-                if end_of_day_position.iloc[row] > 0:
+                if end_of_day_position[row] > 0:
 
                     # If todays close is less than the previous days close
                     # and todays RSI is greater than the overbought level
-                    if (prices['Close'].iloc[row] < prices['Close'].iloc[row-1]
+                    if (close[row] < close[row-1]
                         and rsi[row] > overbought):
 
                         # Set the exit signal to -1
                         rsi_trail_exit[row] = -1
 
                 # If there is a short position
-                elif end_of_day_position.iloc[row] < 0:
+                elif end_of_day_position[row] < 0:
 
                     # If todays close is greater than the previous days close
                     # and todays RSI is less than the oversold level
-                    if (prices['Close'].iloc[row] > prices['Close'].iloc[row-1]
-                        and rsi[row] < oversold):
+                    if (close[row] > close[row-1] and rsi[row] < oversold):
 
                         # Set the exit signal to 1
                         rsi_trail_exit[row] = 1
@@ -391,12 +390,13 @@ class IndicatorExit():
 
         """
 
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+        close = np.array(prices['Close'])
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # Calculate rolling high and low prices based on time period
-        rolling_high = prices['High'].rolling(time_period).max()
-        rolling_low = prices['Low'].rolling(time_period).min()
+        rolling_high = np.array(prices['High'].rolling(time_period).max())
+        rolling_low = np.array(prices['Low'].rolling(time_period).min())
 
         # Create an empty array to store the signals
         key_reversal_exit = np.array([0]*len(prices))
@@ -405,32 +405,28 @@ class IndicatorExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # If there is a long position
-                if end_of_day_position.iloc[row] > 0:
+                if end_of_day_position[row] > 0:
 
                     # If the n-day high today is greater than yesterdays n-day
                     # high and todays close is less than the previous days
                     # close
-                    if ((rolling_high.iloc[row] > rolling_high.iloc[row-1])
-                        and (prices['Close'].iloc[row] <
-                             prices['Close'].iloc[row-1])
-                        ):
+                    if ((rolling_high[row] > rolling_high[row-1])
+                        and (close[row] < close[row-1])):
 
                         # Set the exit signal to -1
                         key_reversal_exit[row] = -1
 
                 # If there is a short position
-                elif end_of_day_position.iloc[row] < 0:
+                elif end_of_day_position[row] < 0:
 
                     # If the n-day low today is less than yesterdays n-day
                     # low and todays close is greater than the previous days
                     # close
-                    if ((rolling_low.iloc[row] < rolling_low.iloc[row-1])
-                        and (prices['Close'].iloc[row] >
-                             prices['Close'].iloc[row-1])
-                        ):
+                    if ((rolling_low[row] < rolling_low[row-1])
+                        and (close[row] > close[row-1])):
 
                         # Set the exit signal to -1
                         key_reversal_exit[row] = 1
@@ -478,8 +474,9 @@ class IndicatorExit():
 
         """
 
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+        close = np.array(prices['Close'])
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # Create an empty array to store the signals
         volatility_exit = np.array([0]*len(prices))
@@ -492,28 +489,24 @@ class IndicatorExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # If there is a long position
-                if end_of_day_position.iloc[row] > 0:
+                if end_of_day_position[row] > 0:
 
                     # If the decrease in closing price from yesterday to today
                     # is greater than the ATR * Threshold
-                    if ((prices['Close'].iloc[row] -
-                         prices['Close'].iloc[row-1])
-                        > (atr[row] * threshold)):
+                    if ((close[row] - close[row-1]) > (atr[row] * threshold)):
 
                         # Set the exit signal to -1
                         volatility_exit[row] = -1
 
                 # If there is a short position
-                elif end_of_day_position.iloc[row] < 0:
+                elif end_of_day_position[row] < 0:
 
                     # If the increase in closing price from yesterday to today
                     # is greater than the ATR * Threshold
-                    if ((prices['Close'].iloc[row-1] -
-                         prices['Close'].iloc[row])
-                        > (atr[row] * threshold)):
+                    if ((close[row-1] - close[row]) > (atr[row] * threshold)):
 
                         # Set the exit signal to 1
                         volatility_exit[row] = 1
@@ -556,9 +549,9 @@ class IndicatorExit():
             The exit signals.
 
         """
-
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+       
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # Calculate slow k  and slow d
         slow_k, slow_d = Indicators.stochastic(
@@ -573,10 +566,10 @@ class IndicatorExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # If there is a long position
-                if end_of_day_position.iloc[row] > 0:
+                if end_of_day_position[row] > 0:
 
                     # If the slow k crosses below the slow d
                     if (slow_k[row] < slow_d[row]
@@ -586,7 +579,7 @@ class IndicatorExit():
                         stoch_cross_exit[row] = -1
 
                 # If there is a short position
-                elif end_of_day_position.iloc[row] < 0:
+                elif end_of_day_position[row] < 0:
 
                     # If the slow k crosses above the slow d
                     if (slow_k[row] > slow_d[row]
@@ -630,8 +623,9 @@ class IndicatorExit():
 
         """
 
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+        close = np.array(prices['Close'])
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # Generate a random number of days between 5 and 20
         exit_days = random.randint(5,20)
@@ -644,32 +638,30 @@ class IndicatorExit():
 
             # Find the row that relates to the trade entry
             trade_first_row = prices.index.get_loc(
-                    prices[trade_number==trade_number.iloc[row]].index[0])
-            trade_row_num = row - trade_first_row
+                    prices[trade_number==trade_number[row]].index[0])
+            trade_row_num = row - trade_first_row #type: ignore
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # If the trade has been on for the random number of days
                 if trade_row_num > exit_days-1:
 
                     # If there is a long position
-                    if end_of_day_position.iloc[row] > 0:
+                    if end_of_day_position[row] > 0:
 
                         # If todays close is less than the previous days close
-                        if (prices['Close'].iloc[row] <
-                            prices['Close'].iloc[row-1]):
+                        if (close[row] < close[row-1]):
 
                             # Set the exit signal to -1
                             random_exit[row] = -1
 
                     # If there is a short position
-                    elif end_of_day_position.iloc[row] < 0:
+                    elif end_of_day_position[row] < 0:
 
                         # If todays close is greater than the previous days
                         # close
-                        if (prices['Close'].iloc[row] >
-                            prices['Close'].iloc[row-1]):
+                        if (close[row] > close[row-1]):
 
                             # Set the exit signal to 1
                             random_exit[row] = 1
@@ -711,12 +703,15 @@ class IndicatorExit():
 
         """
 
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+        close = np.array(prices['Close'])
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # Calculate rolling min and max closing prices based on time period
-        rolling_high_close = prices['Close'].rolling(time_period).max()
-        rolling_low_close = prices['Close'].rolling(time_period).min()
+        rolling_high_close = np.array(
+            prices['Close'].rolling(time_period).max())
+        rolling_low_close = np.array(
+            prices['Close'].rolling(time_period).min())
 
         # Create empty arrays to store the signals
         support_resistance_exit = np.array([0.0]*len(prices))
@@ -726,28 +721,28 @@ class IndicatorExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # If there is a long position
-                if end_of_day_position.iloc[row] > 0:
+                if end_of_day_position[row] > 0:
 
                     # Set the exit level to the n-day low close
-                    exit_level[row] = rolling_low_close.iloc[row]
+                    exit_level[row] = rolling_low_close[row]
 
                     # If the close is greater than the exit level
-                    if prices['Close'].iloc[row] < exit_level[row]:
+                    if close[row] < exit_level[row]:
 
                         # Set the exit signal to -1
                         support_resistance_exit[row] = -1
 
                 # If there is a short position
-                elif end_of_day_position.iloc[row] < 0:
+                elif end_of_day_position[row] < 0:
 
                     # Set the exit level to the n-day high close
-                    exit_level[row] = rolling_high_close.iloc[row]
+                    exit_level[row] = rolling_high_close[row]
 
                     # If the close is greater than the exit level
-                    if prices['Close'].iloc[row] > exit_level[row]:
+                    if close[row] > exit_level[row]:
 
                         # Set the exit signal to 1
                         support_resistance_exit[row] = 1
@@ -790,8 +785,9 @@ class IndicatorExit():
             The exit signals.
         """
 
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+        close = np.array(prices['Close'])
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # Create an empty array to store the signals
         immediate_profit_exit = np.array([0.0]*len(prices))
@@ -800,32 +796,30 @@ class IndicatorExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # Find the row that relates to the trade entry
                 trade_first_row = prices.index.get_loc(
-                    prices[trade_number==trade_number.iloc[row]].index[0])
-                trade_row_num = row - trade_first_row
+                    prices[trade_number==trade_number[row]].index[0])
+                trade_row_num = row - trade_first_row #type: ignore
 
                 # After the given number of days
                 if trade_row_num == time_period-1:
 
                     # If there is a long position
-                    if end_of_day_position.iloc[row] > 0:
+                    if end_of_day_position[row] > 0:
 
                         # If the trade is losing money
-                        if (prices['Close'].iloc[row]
-                            < prices['Close'].iloc[row-time_period]):
+                        if (close[row] < close[row-time_period]):
 
                             # Set the exit signal to -1
                             immediate_profit_exit[row] = -1
 
                     # If there is a short position
-                    elif end_of_day_position.iloc[row] < 0:
+                    elif end_of_day_position[row] < 0:
 
                         # If the trade is losing money
-                        if (prices['Close'].iloc[row]
-                            > prices['Close'].iloc[row-time_period]):
+                        if (close[row] > close[row-time_period]):
 
                             # Set the exit signal to 1
                             immediate_profit_exit[row] = 1
@@ -864,16 +858,17 @@ class IndicatorExit():
 
         """
 
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+        close = np.array(prices['Close'])
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # The highest high minus the lowest low of the last n days
-        n_day_low = prices['Low'].rolling(time_period).min()
-        n_day_high = prices['High'].rolling(time_period).max()
+        n_day_low = np.array(prices['Low'].rolling(time_period).min())
+        n_day_high = np.array(prices['High'].rolling(time_period).max())
         high_low_range = n_day_high - n_day_low
 
         # The largest high low daily range of the last n bars
-        bar_range = (prices['High'] - prices['Low']).rolling(time_period).max()
+        bar_range = np.array((prices['High'] - prices['Low']).rolling(time_period).max())
 
         # Create an empty array to store the signals
         nday_range_exit = np.array([0.0]*len(prices))
@@ -882,12 +877,12 @@ class IndicatorExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # Find the row that relates to the trade entry
                 trade_first_row = prices.index.get_loc(
-                    prices[trade_number==trade_number.iloc[row]].index[0])
-                trade_row_num = row - trade_first_row
+                    prices[trade_number==trade_number[row]].index[0])
+                trade_row_num = row - trade_first_row #type: ignore
 
                 # If it is the trade entry date
                 if trade_row_num == 0:
@@ -899,31 +894,30 @@ class IndicatorExit():
                     # Set target 1 as the lower of the high low range of the
                     # last n days and the longest bar of the last n days
                     target_1 = min(
-                        high_low_range.iloc[row], bar_range.iloc[row])
+                        high_low_range[row], bar_range[row])
                     target_2 = max(
-                        high_low_range.iloc[row], bar_range.iloc[row])
+                        high_low_range[row], bar_range[row])
 
                     # If the position is long, add these to the close to set
                     # the price targets
-                    if end_of_day_position.iloc[row] > 0:
-                        price_target_1 = prices['Close'].iloc[row] + target_1
-                        price_target_2 = prices['Close'].iloc[row] + target_2
+                    if end_of_day_position[row] > 0:
+                        price_target_1 = close[row] + target_1
+                        price_target_2 = close[row] + target_2
 
                     # Otherwise subtract from the price
                     else:
-                        price_target_1 = prices['Close'].iloc[row] - target_1
-                        price_target_2 = prices['Close'].iloc[row] - target_2
+                        price_target_1 = close[row] - target_1
+                        price_target_2 = close[row] - target_2
 
                 # For every other day in the trade
                 else:
 
                     # If the position is long
-                    if end_of_day_position.iloc[row] > 0:
+                    if end_of_day_position[row] > 0:
 
                         # If the close is above the target 1 and this has not
                         # yet been hit
-                        if (prices['Close'].iloc[row] > price_target_1
-                            and pt_1_hit is False):
+                        if (close[row] > price_target_1 and pt_1_hit is False):
 
                             # Set the exit signal to -1
                             nday_range_exit[row] = -1
@@ -933,8 +927,8 @@ class IndicatorExit():
 
                         # If the close is above the target 2 and this has not
                         # yet been hit
-                        elif (prices['Close'].iloc[row] > price_target_2
-                              and pt_2_hit is False):
+                        elif (
+                            close[row] > price_target_2 and pt_2_hit is False):
 
                             # Set the exit signal to -1
                             nday_range_exit[row] = -1
@@ -952,7 +946,7 @@ class IndicatorExit():
 
                         # If the close is below the target 1 and this has not
                         # yet been hit
-                        if (prices['Close'].iloc[row] < price_target_1
+                        if (close[row] < price_target_1
                             and pt_1_hit is False):
 
                             # Set the exit signal to 1
@@ -963,7 +957,7 @@ class IndicatorExit():
 
                         # If the close is above the target 2 and this has not
                         # yet been hit
-                        elif (prices['Close'].iloc[row] < price_target_2
+                        elif (close[row] < price_target_2
                               and pt_2_hit is False):
 
                             # Set the exit signal to 1

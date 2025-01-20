@@ -106,8 +106,10 @@ class DollarExit():
             The exit signals.
 
         """
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+        trigger_value = np.array(trigger_value) #type: ignore
+        close = np.array(prices['Close'])
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # Create an empty array to store the signals
         profit_target_exit = np.array([0]*len(prices))
@@ -116,22 +118,22 @@ class DollarExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # If there is a long position
-                if end_of_day_position.iloc[row] > 0:
+                if end_of_day_position[row] > 0:
 
                     # If the close is greater than the trigger value
-                    if prices['Close'].iloc[row] > trigger_value.iloc[row]:
+                    if close[row] > trigger_value[row]:
 
                         # Set the exit signal to -1
                         profit_target_exit[row] = -1
 
                 # If there is a short position
-                elif end_of_day_position.iloc[row] < 0:
+                elif end_of_day_position[row] < 0:
 
                     # If the close is less than the trigger value
-                    if prices['Close'].iloc[row] < trigger_value.iloc[row]:
+                    if close[row] < trigger_value[row]:
 
                         # Set the exit signal to 1
                         profit_target_exit[row] = 1
@@ -169,9 +171,10 @@ class DollarExit():
             The exit signals.
 
         """
-
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+        trigger_value = np.array(trigger_value) #type: ignore
+        close = np.array(prices['Close'])
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # Create an empty array to store the signals
         initial_dollar_loss_exit = np.array([0]*len(prices))
@@ -180,22 +183,22 @@ class DollarExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # If there is a long position
-                if end_of_day_position.iloc[row] > 0:
+                if end_of_day_position[row] > 0:
 
                     # If the close is less than the trigger value
-                    if prices['Close'].iloc[row] < trigger_value.iloc[row]:
+                    if close[row] < trigger_value[row]:
 
                         # Set the exit signal to -1
                         initial_dollar_loss_exit[row] = -1
 
                 # If there is a short position
-                elif end_of_day_position.iloc[row] < 0:
+                elif end_of_day_position[row] < 0:
 
                     # If the close is greater than the trigger value
-                    if prices['Close'].iloc[row] > trigger_value.iloc[row]:
+                    if close[row] > trigger_value[row]:
 
                         # Set the exit signal to 1
                         initial_dollar_loss_exit[row] = 1
@@ -237,11 +240,12 @@ class DollarExit():
             The exit signals.
 
         """
-
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
-        trade_high_price = prices['raw_trade_high_price']
-        trade_low_price = prices['raw_trade_low_price']
+        trigger_value = np.array(trigger_value) #type: ignore
+        close = np.array(prices['Close'])
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
+        trade_high_price = np.array(prices['raw_trade_high_price'])
+        trade_low_price = np.array(prices['raw_trade_low_price'])
 
         # Create an empty array to store the signals
         breakeven_exit = np.array([0.0]*len(prices))
@@ -250,30 +254,30 @@ class DollarExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # If there is a long position
-                if end_of_day_position.iloc[row] > 0:
+                if end_of_day_position[row] > 0:
 
                     # If the high price of the trade is greater than the
                     # trigger value
-                    if trade_high_price.iloc[row] > trigger_value.iloc[row]:
+                    if trade_high_price[row] > trigger_value[row]:
 
                         # If the close is less than the trigger value
-                        if prices['Close'].iloc[row] < trigger_value.iloc[row]:
+                        if close[row] < trigger_value[row]:
 
                             # Set the exit signal to -1
                             breakeven_exit[row] = -1
 
                 # If there is a short position
-                elif end_of_day_position.iloc[row] < 0:
+                elif end_of_day_position[row] < 0:
 
                     # If the low price of the trade is less than the
                     # trigger value
-                    if trade_low_price.iloc[row] < trigger_value.iloc[row]:
+                    if trade_low_price[row] < trigger_value[row]:
 
                         # If the close is greater than the trigger value
-                        if prices['Close'].iloc[row] > trigger_value.iloc[row]:
+                        if close[row] > trigger_value[row]:
 
                             # Set the exit signal to 1
                             breakeven_exit[row] = 1
@@ -311,8 +315,10 @@ class DollarExit():
 
         """
 
-        trade_number = prices['raw_trade_number']
-        end_of_day_position = prices['raw_end_of_day_position']
+        trigger_value = np.array(trigger_value) #type: ignore
+        close = np.array(prices['Close'])
+        trade_number = np.array(prices['raw_trade_number'])
+        end_of_day_position = np.array(prices['raw_end_of_day_position'])
 
         # Create an empty array to store the signals
         trailing_exit = np.array([0.0]*len(prices))
@@ -321,22 +327,22 @@ class DollarExit():
         for row in range(1, len(prices)):
 
             # If there is a trade on
-            if trade_number.iloc[row] != 0:
+            if trade_number[row] != 0:
 
                 # If there is a long position
-                if end_of_day_position.iloc[row] > 0:
+                if end_of_day_position[row] > 0:
 
                     # If the close is less than the trigger value
-                    if prices['Close'].iloc[row] < trigger_value.iloc[row]:
+                    if close[row] < trigger_value[row]:
 
                         # Set the exit signal to -1
                         trailing_exit[row] = -1
 
                 # If there is a short position
-                elif end_of_day_position.iloc[row] < 0:
+                elif end_of_day_position[row] < 0:
 
                     # If the close is greater than the trigger value
-                    if prices['Close'].iloc[row] > trigger_value.iloc[row]:
+                    if close[row] > trigger_value[row]:
 
                         # Set the exit signal to 1
                         trailing_exit[row] = 1

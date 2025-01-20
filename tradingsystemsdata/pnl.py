@@ -128,9 +128,9 @@ class Profit():
         """
 
         # Create series of open, close and position
-        open_ = prices['Open']
-        close = prices['Close']
-        pos = prices['end_of_day_position']
+        open_ = np.array(prices['Open'])
+        close = np.array(prices['Close'])
+        pos = np.array(prices['end_of_day_position'])
 
         # Create array of zeros
         day_pnl = np.array([0]*len(close), dtype=float)
@@ -140,10 +140,10 @@ class Profit():
         for row in range(1, len(close)):
 
             # If the current position is flat
-            if pos.iat[row] == 0:
+            if pos[row] == 0:
 
                 # If the previous days position was flat
-                if pos.iat[row - 1] == 0:
+                if pos[row - 1] == 0:
 
                     # Set the pnl to zero
                     day_pnl[row] = 0
@@ -154,45 +154,45 @@ class Profit():
                     # the difference between todays open and yesterdays close
                     # less the cost of slippage and commission
                     day_pnl[row] = (
-                        ((pos.iat[row - 1] *
-                          (open_.iat[row] - close.iat[row - 1])
-                         - abs(pos.iat[row - 1]
+                        ((pos[row - 1] *
+                          (open_[row] - close[row - 1])
+                         - abs(pos[row - 1]
                                * params['slippage']
                                * 0.0001
-                               * open_.iat[row]))
+                               * open_[row]))
                         - params['commission'])
                         * params['contract_point_value'])
 
             # If the current position is not flat
             else:
                 # If the position is the same as the previous day
-                if pos.iat[row] == pos.iat[row - 1]:
+                if pos[row] == pos[row - 1]:
 
                     # Set the pnl to the current position * the difference
                     # between todays close and yesterdays close
-                    day_pnl[row] = (pos.iat[row]
-                                    * (close.iat[row] - close.iat[row - 1])
+                    day_pnl[row] = (pos[row]
+                                    * (close[row] - close[row - 1])
                                     * params['contract_point_value'])
 
                 # If the position is reversed from the previous day
-                elif pos.iat[row] == (-1) * pos.iat[row - 1]:
+                elif pos[row] == (-1) * pos[row - 1]:
                     day_pnl[row] = (
-                        ((pos.iat[row] * (close.iat[row] - open_.iat[row])
-                         - abs(pos.iat[row]
+                        ((pos[row] * (close[row] - open_[row])
+                         - abs(pos[row]
                                * params['slippage']
                                * 0.0001
-                               * open_.iat[row]))
+                               * open_[row]))
                         - params['commission'])
                         * params['contract_point_value'])
 
                     last_day_trade_pnl[row] = (
-                        ((pos.iat[row - 1] *
-                          (open_.iat[row] - close.iat[row - 1])
+                        ((pos[row - 1] *
+                          (open_[row] - close[row - 1])
                          - abs(
-                             pos.iat[row - 1]
+                             pos[row - 1]
                              * params['slippage']
                              * 0.0001
-                             * open_.iat[row]))
+                             * open_[row]))
                         - params['commission'])
                         * params['contract_point_value'])
 
@@ -202,19 +202,20 @@ class Profit():
                     # between todays open and todays close less the cost of
                     # slippage and commission
                     day_pnl[row] = (
-                        ((pos.iat[row] * (close.iat[row] - open_.iat[row])
-                         - abs(pos.iat[row]
+                        ((pos[row] * (close[row] - open_[row])
+                         - abs(pos[row]
                                * params['slippage']
                                * 0.0001
-                               * open_.iat[row]))
+                               * open_[row]))
                         - params['commission'])
                         * params['contract_point_value'])
 
         # Create daily pnl column in DataFrame, rounding to 2dp
         prices['current_trade_pnl'] = np.round(day_pnl, 2)
         prices['last_day_trade_pnl'] = last_day_trade_pnl
-        prices['daily_pnl'] = (prices['current_trade_pnl']
-                               + prices['last_day_trade_pnl'])
+        prices['daily_pnl'] = (
+            prices['current_trade_pnl'] + prices['last_day_trade_pnl']
+            )
 
         return prices
 
@@ -274,10 +275,10 @@ class Profit():
 
         """
         # Take the trade number and daily pnl series from prices
-        trade_number = prices['trade_number']
-        current_trade_pnl = prices['current_trade_pnl']
-        last_day_trade_pnl = prices['last_day_trade_pnl']
-        daily_pnl = prices['daily_pnl']
+        trade_number = np.array(prices['trade_number'])
+        current_trade_pnl = np.array(prices['current_trade_pnl'])
+        last_day_trade_pnl = np.array(prices['last_day_trade_pnl'])
+        daily_pnl = np.array(prices['daily_pnl'])
 
         # Create arrays of zeros
         cumulative_trade_pnl = np.array([0.0]*len(daily_pnl))
@@ -295,31 +296,31 @@ class Profit():
 
             # The index location of the trade entry date
             trade_first_row = prices.index.get_loc(
-                prices[trade_number==trade_number.iat[row]].index[0])
+                prices[trade_number==trade_number[row]].index[0])
 
             # The number of days since trade entry
-            trade_row_num = row - trade_first_row
+            trade_row_num = row - trade_first_row #type: ignore
 
             # The index location of the trade entry date
             trade_last_row = prices.index.get_loc(
-                prices[trade_number==trade_number.iat[row]].index[-1])
+                prices[trade_number==trade_number[row]].index[-1])
 
             # Set the mtm equity to the previous days mtm equity plus
             # the days pnl
-            mtm_equity[row] = mtm_equity[row-1] + daily_pnl.iat[row]
+            mtm_equity[row] = mtm_equity[row-1] + daily_pnl[row]
 
             # If there is a current trade
-            if trade_number.iat[row] != 0:
+            if trade_number[row] != 0:
 
                 # If it is the trade entry date and there was no prior trade
                 if (trade_row_num == 0
-                    and trade_number.iat[row - 1] == 0):
+                    and trade_number[row - 1] == 0):
 
                     # Set cumulative trade pnl to the days pnl
-                    cumulative_trade_pnl[row] = daily_pnl.iat[row]
+                    cumulative_trade_pnl[row] = daily_pnl[row]
 
                     # The maximum of the initial days pnl and zero
-                    max_trade_pnl[row] = max(daily_pnl.iat[row], 0)
+                    max_trade_pnl[row] = max(daily_pnl[row], 0)
 
                     # Set the closed equity to the previous days closed equity
                     closed_equity[row] = closed_equity[row-1]
@@ -328,31 +329,31 @@ class Profit():
                 # If it is the trade entry date and this reverses the position
                 # of a prior trade
                 elif (trade_row_num == 0
-                    and trade_number.iat[row - 1] != 0):
+                    and trade_number[row - 1] != 0):
 
                     # Set cumulative trade pnl to the previous days cumulative
                     # pnl plus the last days pnl
                     cumulative_trade_pnl[row] = (cumulative_trade_pnl[row-1]
-                                                 + last_day_trade_pnl.iat[row])
+                                                 + last_day_trade_pnl[row])
 
-                    #  Set cumulative trade pnl to the previous days cumulative
-                    # pnl plus the last days pnl
+                    # The maximum of the current trade equity and the maximum
+                    # trade equity of the previous day
                     max_trade_pnl[row] = max(
                         cumulative_trade_pnl[row], max_trade_pnl[row-1])
 
                     # Set the closed equity to the previous days closed equity
                     closed_equity[row] = (mtm_equity[row-1]
-                                          + last_day_trade_pnl.iat[row])
+                                          + last_day_trade_pnl[row])
 
 
                 # If it is the trade exit date and not a reversal
-                elif (trade_last_row - row == 0
-                      and trade_number.iat[row] == trade_number.iat[row - 1]):
+                elif (trade_last_row - row == 0 #type: ignore
+                      and trade_number[row] == trade_number[row - 1]):
 
                     # Set cumulative trade pnl to the previous days cumulative
                     # pnl plus the days pnl
                     cumulative_trade_pnl[row] = (cumulative_trade_pnl[row-1]
-                                                 + daily_pnl.iat[row])
+                                                 + daily_pnl[row])
 
                     # The maximum of the current trade equity and the maximum
                     # trade equity of the previous day
@@ -365,18 +366,18 @@ class Profit():
 
                 # If it is the second day of a reversal trade
                 elif (trade_row_num == 1
-                      and trade_number.iat[row - 1] != trade_number.iloc[row-2]):
+                      and trade_number[row - 1] != trade_number[row-2]):
 
                     # Set cumulative trade pnl to the previous days current
                     # pnl plus the days pnl
                     cumulative_trade_pnl[row] = (
-                        current_trade_pnl.iat[row - 1] + daily_pnl.iat[row]
+                        current_trade_pnl[row - 1] + daily_pnl[row]
                         )
 
                     # The maximum of the first and second days pnl and zero
                     max_trade_pnl[row] = max(
                         cumulative_trade_pnl[row],
-                        current_trade_pnl.iat[row - 1]
+                        current_trade_pnl[row - 1]
                         )
 
                     # Set the closed equity to the previous days closed equity
@@ -388,7 +389,7 @@ class Profit():
                     # Set cumulative trade pnl to the previous days cumulative
                     # pnl plus the days pnl
                     cumulative_trade_pnl[row] = (
-                        cumulative_trade_pnl[row-1] + daily_pnl.iat[row]
+                        cumulative_trade_pnl[row-1] + daily_pnl[row]
                         )
 
                     # The maximum of the current trade equity and the maximum
@@ -444,9 +445,9 @@ class Profit():
 
         """
         # Extract various series from prices
-        daily_pnl = prices['daily_pnl']
-        mtm_equity = prices['mtm_equity']
-        closed_equity = prices['closed_equity']
+        daily_pnl = np.array(prices['daily_pnl'])
+        mtm_equity = np.array(prices['mtm_equity'])
+        closed_equity = np.array(prices['closed_equity'])
 
         # Create arrays of zeros
         max_mtm_equity = np.array([0.0]*len(daily_pnl))
@@ -475,12 +476,12 @@ class Profit():
             # Maximum of max closed equity and current mtm equity, used in
             # calculating Average Max Retracement
             max_retracement[row] = max(
-                (max_closed_equity[row] - mtm_equity.iat[row]), 0)
+                (max_closed_equity[row] - mtm_equity[row]), 0)
 
             # Squared difference between max mtm equity and current mtm equity,
             # used in calculating Ulcer Index
             ulcer_index_d_sq[row] = (
-                (((max_mtm_equity[row] - mtm_equity.iat[row])
+                (((max_mtm_equity[row] - mtm_equity[row])
                  / max_mtm_equity[row]) * 100) ** 2)
 
         prices['max_closed_equity'] = max_closed_equity
@@ -510,10 +511,10 @@ class Profit():
 
         """
         # Extract various series from prices
-        daily_pnl = prices['daily_pnl']
-        mtm_equity = prices['mtm_equity']
-        max_mtm_equity = prices['max_mtm_equity']
-        min_mtm_equity = prices['min_mtm_equity']
+        daily_pnl = np.array(prices['daily_pnl'])
+        mtm_equity = np.array(prices['mtm_equity'])
+        max_mtm_equity = np.array(prices['max_mtm_equity'])
+        min_mtm_equity = np.array(prices['min_mtm_equity'])
 
         # Create max drawdown and max gain numpy arrays of zeros
         max_drawdown = np.array([0.0]*len(daily_pnl))
@@ -526,22 +527,22 @@ class Profit():
 
             # Maximum drawdown is the smallest value of the current cumulative
             # pnl less the max of all previous rows cumulative pnl and zero
-            max_drawdown[row] = mtm_equity.iat[row] - max_mtm_equity.iat[row]
+            max_drawdown[row] = mtm_equity[row] - max_mtm_equity[row]
 
             # Percentage Maximum drawdown
             max_drawdown_perc[row] = (
-                (mtm_equity.iat[row] - max_mtm_equity.iat[row]) /
-                max_mtm_equity.iat[row]
+                (mtm_equity[row] - max_mtm_equity[row]) /
+                max_mtm_equity[row]
                 )
 
             # Maximum gain is the largest value of the current cumulative
             # pnl less the min of all previous rows and zero
-            max_gain[row] = mtm_equity.iat[row] - min_mtm_equity.iat[row]
+            max_gain[row] = mtm_equity[row] - min_mtm_equity[row]
 
             # Percentage Maximum gain
             max_gain_perc[row] = (
-                (mtm_equity.iat[row] - min_mtm_equity.iat[row]) /
-                min_mtm_equity.iat[row]
+                (mtm_equity[row] - min_mtm_equity[row]) /
+                min_mtm_equity[row]
                 )
 
         prices['max_dd'] = max_drawdown
@@ -570,9 +571,9 @@ class Profit():
 
         """
         # Extract various series from prices
-        daily_pnl = prices['daily_pnl']
-        cumulative_trade_pnl = prices['cumulative_trade_pnl']
-        max_trade_pnl = prices['max_trade_pnl']
+        daily_pnl = np.array(prices['daily_pnl'])
+        cumulative_trade_pnl = np.array(prices['cumulative_trade_pnl'])
+        max_trade_pnl = np.array(prices['max_trade_pnl'])
 
         # Create arrays of zeros
         trade_pnl_drawback = np.array([0.0]*len(daily_pnl))
@@ -583,15 +584,15 @@ class Profit():
 
             # The difference between the highest equity peak of the trade and
             # the current trade open equity
-            trade_pnl_drawback[row] = (max_trade_pnl.iat[row]
-                                       - cumulative_trade_pnl.iat[row])
+            trade_pnl_drawback[row] = (max_trade_pnl[row]
+                                       - cumulative_trade_pnl[row])
 
             # The percentage difference between the highest equity peak of the
             # trade and the current trade open equity
-            if max_trade_pnl.iat[row] !=0:
+            if max_trade_pnl[row] !=0:
                 trade_pnl_drawback_perc[row] = (
-                    (max_trade_pnl.iat[row] - cumulative_trade_pnl.iat[row])
-                    / max_trade_pnl.iat[row])
+                    (max_trade_pnl[row] - cumulative_trade_pnl[row])
+                    / max_trade_pnl[row])
 
         prices['trade_pnl_drawback'] = trade_pnl_drawback
         prices['trade_pnl_drawback_perc'] = trade_pnl_drawback_perc
@@ -619,23 +620,23 @@ class Profit():
             The input data with additional columns.
 
         """
+        high = np.array(prices['High'])
+        low = np.array(prices['Low'])
+        close = np.array(prices['Close'])
+        pos_pp = np.array(prices['position_size_pp'])
 
         dpp = np.array([0.0]*len(prices))
 
         for row in range(params['first_trade_start'], len(dpp)):
 
             # Calculate Daily Perfect Profit
-            dpp[row] = (
-                abs(prices['High'].iat[row] - prices['Low'].iat[row])
-                * prices['position_size_pp'].iat[row])
+            dpp[row] = abs(high[row] - low[row]) * pos_pp[row]
 
             # If the High and Low are the same
             if dpp[row] == 0:
 
                 # Use the previous close
-                dpp[row] = (
-                    abs(prices['High'].iat[row] - prices['Close'].iat[row - 1])
-                    * prices['position_size_pp'].iat[row])
+                dpp[row] = abs(high[row] - close[row - 1]) * pos_pp[row]
 
         # Set this to the daily perfect profit
         prices['daily_perfect_profit'] = dpp * params['contract_point_value']
@@ -656,20 +657,26 @@ class Profit():
         prices: pd.DataFrame,
         params: dict) -> pd.DataFrame:
 
-        prices['total_margin'] = np.array([0.0]*len(prices))
+        position_size = np.array(prices['position_size'])
+        close = np.array(prices['Close'])
+        cumulative_trade_pnl = np.array(prices['cumulative_trade_pnl'])
+
+        initial_margin = np.array([0.0]*len(prices))
+        total_margin = np.array([0.0]*len(prices))
 
         if params['ticker'][0] == '&':
-            prices['initial_margin'] = (
-                prices['position_size'] * params['per_contract_margin'])
+            initial_margin = position_size * params['per_contract_margin']
 
         else:
-            prices['initial_margin'] = (
-                prices['Close'] * prices['position_size'] * params['margin_%'])
+            initial_margin = close * position_size * params['margin_%']
 
         for row in range(params['first_trade_start'], len(prices)):
-            prices['total_margin'].iat[row] = (
-                prices['initial_margin'].iat[row]
-                + max(0, -prices['cumulative_trade_pnl'].iat[row]))
+            total_margin[row] = (
+                initial_margin[row] + max(0, -cumulative_trade_pnl[row])
+                )
+
+        prices['initial_margin'] = initial_margin
+        prices['total_margin'] = total_margin
 
         return prices
 
@@ -701,7 +708,7 @@ class Profit():
         # Calculate the point where equity has returned to the pre drawdown
         # level
         if max(prices['max_dd'][dd_start:]) == 0:
-            dd_length = (prices['max_dd'][dd_start:].values == 0).argmax()
+            dd_length = (prices['max_dd'][dd_start:].values == 0).argmax() #type: ignore
 
         # Otherwise return N/A
         else:
@@ -737,7 +744,7 @@ class Profit():
             gain_rev[gain_rev==max_gain_val].index[0])
 
         # Calculate the time taken from zero to this max gain
-        gain_length = (gain_rev[max_gain_loc:].values == 0).argmax()
+        gain_length = (gain_rev[max_gain_loc:].values == 0).argmax() #type: ignore
 
         return gain_length
 

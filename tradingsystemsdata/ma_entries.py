@@ -41,6 +41,8 @@ class MovingAverageEntry():
             The series of Buy / Sell signals.
 
         """
+        close = np.array(prices['Close'])
+
         ma1 = params['ma1']
         ma2 = params['ma2']
         simple_ma = params['simple_ma']
@@ -48,8 +50,8 @@ class MovingAverageEntry():
         if simple_ma:
 
             # Create short and long simple moving averages
-            ma_1 = prices['Close'].rolling(str(ma1)+'D').mean()
-            ma_2 = prices['Close'].rolling(str(ma2)+'D').mean()
+            ma_1 = np.array(prices['Close'].rolling(str(ma1)+'D').mean())
+            ma_2 = np.array(prices['Close'].rolling(str(ma2)+'D').mean())
 
         else:
             # Create short and long exponential moving averages
@@ -57,9 +59,6 @@ class MovingAverageEntry():
                 input_series=prices['Close'], time_period=ma1)
             ma_2 = Indicators.EMA(
                 input_series=prices['Close'], time_period=ma2)
-
-        ma_1 = np.array(ma_1)
-        ma_2 = np.array(ma_2)
 
         # Create start point from first valid number
         start = np.where(~np.isnan(ma_2))[0][0]
@@ -78,8 +77,8 @@ class MovingAverageEntry():
         for row in range(start, len(ma_2)):
 
             # Calculate the min and max ma values
-            min_ma[row] = min(ma_1[row], ma_2[row], prices['Close'].iloc[row])
-            max_ma[row] = max(ma_1[row], ma_2[row], prices['Close'].iloc[row])
+            min_ma[row] = min(ma_1[row], ma_2[row], close[row])
+            max_ma[row] = max(ma_1[row], ma_2[row], close[row])
 
             # If the short MA crosses above the long MA
             if ma_1[row] > ma_2[row] and ma_1[row-1] < ma_2[row-1]:
@@ -144,6 +143,8 @@ class MovingAverageEntry():
 
         """
 
+        close = np.array(prices['Close'])
+
         ma1 = params['ma1']
         ma2 = params['ma2']
         ma3 = params['ma3']
@@ -151,9 +152,9 @@ class MovingAverageEntry():
 
         # Create fast, medium and slow simple moving averages
         if simple_ma:
-            ma_1 = prices['Close'].rolling(str(ma1)+'D').mean()
-            ma_2 = prices['Close'].rolling(str(ma2)+'D').mean()
-            ma_3 = prices['Close'].rolling(str(ma3)+'D').mean()
+            ma_1 = np.array(prices['Close'].rolling(str(ma1)+'D').mean())
+            ma_2 = np.array(prices['Close'].rolling(str(ma2)+'D').mean())
+            ma_3 = np.array(prices['Close'].rolling(str(ma3)+'D').mean())
 
         else:
             ma_1 = Indicators.EMA(
@@ -162,10 +163,6 @@ class MovingAverageEntry():
                 input_series=prices['Close'], time_period=ma2)
             ma_3 = Indicators.EMA(
                 input_series=prices['Close'], time_period=ma3)
-
-        ma_1 = np.array(ma_1)
-        ma_2 = np.array(ma_2)
-        ma_3 = np.array(ma_3)
 
         # Create start point from first valid number
         start = np.where(~np.isnan(ma_3))[0][0]
@@ -184,10 +181,8 @@ class MovingAverageEntry():
         for row in range(start, len(ma_3)):
 
             # Calculate the min and max ma values
-            min_ma[row] = min(
-                ma_1[row], ma_2[row], prices['Close'].iloc[row])
-            max_ma[row] = max(
-                ma_1[row], ma_2[row], prices['Close'].iloc[row])
+            min_ma[row] = min(ma_1[row], ma_2[row], close[row])
+            max_ma[row] = max(ma_1[row], ma_2[row], close[row])
 
             # If the shortest ma is above the medium ma is above the long ma
             if ma_1[row] > ma_2[row] > ma_3[row]:
@@ -264,6 +259,8 @@ class MovingAverageEntry():
             The series of Buy / Sell signals.
         """
 
+        close = np.array(prices['Close'])
+
         ma1 = params['ma1']
         ma2 = params['ma2']
         ma3 = params['ma3']
@@ -272,10 +269,10 @@ class MovingAverageEntry():
 
         # Create the 4 simple moving averages
         if simple_ma:
-            ma_1 = prices['Close'].rolling(str(ma1)+'D').mean()
-            ma_2 = prices['Close'].rolling(str(ma2)+'D').mean()
-            ma_3 = prices['Close'].rolling(str(ma3)+'D').mean()
-            ma_4 = prices['Close'].rolling(str(ma4)+'D').mean()
+            ma_1 = np.array(prices['Close'].rolling(str(ma1)+'D').mean())
+            ma_2 = np.array(prices['Close'].rolling(str(ma2)+'D').mean())
+            ma_3 = np.array(prices['Close'].rolling(str(ma3)+'D').mean())
+            ma_4 = np.array(prices['Close'].rolling(str(ma4)+'D').mean())
 
         else:
             ma_1 = Indicators.EMA(
@@ -286,11 +283,6 @@ class MovingAverageEntry():
                 input_series=prices['Close'], time_period=ma3)
             ma_4 = Indicators.EMA(
                 input_series=prices['Close'], time_period=ma4)
-
-        ma_1 = np.array(ma_1)
-        ma_2 = np.array(ma_2)
-        ma_3 = np.array(ma_3)
-        ma_4 = np.array(ma_4)
 
         # Create numpy array of zeros to store position signals
         position_signal = np.array([0]*len(ma_4))
@@ -316,10 +308,8 @@ class MovingAverageEntry():
                 position_signal[row] = 0
 
             # Calculate the min and max ma values
-            min_ma[row] = min(
-                ma_1[row], ma_2[row], prices['Close'].iloc[row])
-            max_ma[row] = max(
-                ma_1[row], ma_2[row], prices['Close'].iloc[row])
+            min_ma[row] = min(ma_1[row], ma_2[row], close[row])
+            max_ma[row] = max(ma_1[row], ma_2[row], close[row])
 
             # If the position signal is to be long
             if position_signal[row] == 1:

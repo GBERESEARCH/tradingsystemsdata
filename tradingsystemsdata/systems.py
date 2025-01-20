@@ -481,13 +481,14 @@ class TestStrategy():
         indicators = cls._get_indicators(
             params=params, tables=tables, es_dict=es_dict)
         
-        trade_data = cls._get_trades(tables=tables)
+        trade_data, trade_data_array = cls._get_trades(tables=tables)
 
         params['es_dict'] = es_dict
         params['graph_params'] = graph_params
         params['signal_dict'] = signal_dict
         params['indicators'] = indicators        
         params['trade_data'] = trade_data        
+        params['trade_data_array'] = trade_data_array        
 
         return params
     
@@ -644,27 +645,69 @@ class TestStrategy():
             'exit_dates': [],
             'exit_prices': [],
             'position_sizes': [],
-            'profits': []
+            'abs_pos_sizes': [],
+            'profits': [],
+            'directions': []
             }
 
         for row in range(1, len(prices)):
-            if prices['raw_trade_number'].iloc[row] > prices['raw_trade_number'].iloc[row-1]:
+            if (prices['raw_trade_number'].iloc[row] > 
+                prices['raw_trade_number'].iloc[row-1]):
                 trade_data['entry_dates'].append(str(prices.index[row].date()))
-                trade_data['entry_prices'].append(float(prices['Open'].iloc[row]))
-            if ((prices['trade_number'].iloc[row] == 0 
-                 and prices['trade_number'].iloc[row-1] !=0)
-                or (prices['trade_number'].iloc[row] != 0 
-                    and prices['trade_number'].iloc[row-1] !=0 
-                    and (prices['trade_number'].iloc[row] > prices['trade_number'].iloc[row-1]))):
-                trade_data['exit_dates'].append(str(prices.index[row-1].date()))
-                trade_data['exit_prices'].append(
-                    float(prices['Open'].iloc[row-1]))
-                trade_data['position_sizes'].append(
-                    int(prices['end_of_day_position'].iloc[row-2]))
-                trade_data['profits'].append(
-                    float(prices['cumulative_trade_pnl'].iloc[row-1]))
+                trade_data['entry_prices'].append(float(
+                    prices['Open'].iloc[row]))
+                trade_data['position_sizes'].append(int(
+                    prices['end_of_day_position'].iloc[row]))
+                trade_data['abs_pos_sizes'].append(abs(int(
+                    prices['end_of_day_position'].iloc[row])))
+                direction = ('Long' 
+                             if prices['end_of_day_position'].iloc[row] > 0 else 'Short')
+                trade_data['directions'].append(direction)
 
-        return trade_data 
+            if (prices['trade_number'].iloc[row] == 0 
+                and prices['trade_number'].iloc[row-1] !=0):
+                trade_data['exit_dates'].append(str(prices.index[row-1].date()))
+                trade_data['exit_prices'].append(float(
+                    prices['Open'].iloc[row-1]))
+                trade_data['profits'].append(float(
+                    prices['cumulative_trade_pnl'].iloc[row-1]))
+
+
+            elif (prices['trade_number'].iloc[row] == 
+                  (prices['trade_number'].iloc[row-1] + 1) 
+                  and prices['trade_number'].iloc[row-1] !=0 
+                  and row != len(prices)-1):
+                trade_data['exit_dates'].append(str(prices.index[row].date()))
+                trade_data['exit_prices'].append(float(
+                    prices['Open'].iloc[row]))
+                trade_data['profits'].append(float(
+                    prices['cumulative_trade_pnl'].iloc[row]))
+
+            else:
+                if (row == len(prices)-1 
+                    and prices['trade_number'].iloc[-1] !=0):
+                    trade_data['exit_dates'].append(str(
+                        prices.index[-1].date()))
+                    trade_data['exit_prices'].append(float(
+                        prices['Close'].iloc[-1]))
+                    trade_data['profits'].append(float(
+                        prices['cumulative_trade_pnl'].iloc[-1]))
+
+        trade_data_array = []
+
+        for index, item in enumerate(trade_data['entry_dates']):
+            trade_dict = {}
+            trade_dict['entry_date'] = item
+            trade_dict['entry_price'] = trade_data['entry_prices'][index]
+            trade_dict['exit_date'] = trade_data['exit_dates'][index]
+            trade_dict['exit_price'] = trade_data['exit_prices'][index]
+            trade_dict['position_size'] = trade_data['position_sizes'][index]
+            trade_dict['abs_pos_size'] = trade_data['abs_pos_sizes'][index]
+            trade_dict['profit'] = trade_data['profits'][index]
+            trade_dict['direction'] = trade_data['directions'][index]
+            trade_data_array.append(trade_dict)
+
+        return trade_data, trade_data_array 
 
 
 class TestPortfolio():

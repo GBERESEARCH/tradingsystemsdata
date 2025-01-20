@@ -74,116 +74,120 @@ class Labels():
         if params['entry_type'] == '2ma':
 
             # Set the entry label
-            entry_label = (str(params['ma1'])
-                           +'-, '
-                           +str(params['ma2'])
-                           +'-day : '
-                           +default_dict['df_entry_signal_labels'][
-                               params['entry_type']][0]
-                           +ma_type_label
-                           +default_dict['df_entry_signal_labels'][
-                               params['entry_type']][1])
+            entry_label = (
+                str(params['ma1'])
+                +'-, '
+                +str(params['ma2'])
+                +'-day : '
+                +default_dict['df_entry_signal_labels'][params['entry_type']][0]
+                +ma_type_label
+                +default_dict['df_entry_signal_labels'][params['entry_type']][1]
+                )
 
 
         # Triple Moving Average Crossover
         elif params['entry_type'] == '3ma':
 
             # Set the entry label
-            entry_label = (str(params['ma1'])
-                           +'-, '
-                           +str(params['ma2'])
-                           +'-, '
-                           +str(params['ma3'])
-                           +'-day : '
-                           +default_dict['df_entry_signal_labels'][
-                               params['entry_type']][0]
-                           +ma_type_label
-                           +default_dict['df_entry_signal_labels'][
-                               params['entry_type']][1])
+            entry_label = (
+                str(params['ma1'])
+                +'-, '
+                +str(params['ma2'])
+                +'-, '
+                +str(params['ma3'])
+                +'-day : '
+                +default_dict['df_entry_signal_labels'][params['entry_type']][0]
+                +ma_type_label
+                +default_dict['df_entry_signal_labels'][params['entry_type']][1]
+                )
 
 
         # Quad Moving Average Crossover
         elif params['entry_type'] == '4ma':
 
             # Set the entry label
-            entry_label = (str(params['ma1'])
-                           +'-, '
-                           +str(params['ma2'])
-                           +'-, '
-                           +str(params['ma3'])
-                           +'-, '
-                           +str(params['ma4'])
-                           +'-day : '
-                           +default_dict['df_entry_signal_labels'][
-                               params['entry_type']][0]
-                           +ma_type_label
-                           +default_dict['df_entry_signal_labels'][
-                               params['entry_type']][1])
+            entry_label = (
+                str(params['ma1'])
+                +'-, '
+                +str(params['ma2'])
+                +'-, '
+                +str(params['ma3'])
+                +'-, '
+                +str(params['ma4'])
+                +'-day : '
+                +default_dict['df_entry_signal_labels'][params['entry_type']][0]
+                +ma_type_label
+                +default_dict['df_entry_signal_labels'][params['entry_type']][1]
+                )
 
 
         # Parabolic SAR
         elif params['entry_type'] == 'sar':
 
             # Set the entry label
-            entry_label = (str(params['entry_period'])
-                          +'-day '
-                          +str(np.round(params[
-                              'entry_acceleration_factor'] * 100, 1))
-                          +'% AF '
-                          +default_dict['df_entry_signal_labels'][
-                              params['entry_type']])
+            entry_label = (
+                str(params['entry_period'])
+                +'-day '
+                +str(np.round(params['entry_acceleration_factor'] * 100, 1))
+                +'% AF '
+                +default_dict['df_entry_signal_labels'][params['entry_type']]
+                )
 
 
         # Channel Breakout, ADX
         elif params['entry_type'] in ['channel_breakout', 'adx']:
 
             # Set the entry label
-            entry_label = (str(params['entry_period'])
-                           +'-day : '
-                           +default_dict['df_entry_signal_labels'][
-                               params['entry_type']])
+            entry_label = (
+                str(params['entry_period'])
+                +'-day : '
+                +default_dict['df_entry_signal_labels'][params['entry_type']]
+                )
 
 
         # Stochastic Crossover, Stochastic Pop, Stochastic Over Under and
         # Relative Strength Index
-        elif params['entry_type'] in ['stoch_cross', 'stoch_over_under',
-                                      'stoch_pop', 'rsi']:
+        elif params['entry_type'] in [
+            'stoch_cross', 'stoch_over_under', 'stoch_pop', 'rsi']:
 
             # Set the entry label
-            entry_label = (str(params['entry_period'])
-                           +'-day '
-                           +str(params['entry_overbought'])
-                           +'-'
-                           +str(params['entry_oversold'])
-                           +' : '
-                           +default_dict['df_entry_signal_labels'][
-                               params['entry_type']])
+            entry_label = (
+                str(params['entry_period'])
+                +'-day '
+                +str(params['entry_overbought'])
+                +'-'
+                +str(params['entry_oversold'])
+                +' : '
+                +default_dict['df_entry_signal_labels'][params['entry_type']]
+                )
 
 
         # Commodity Channel Index, Momentum and Volatility
         elif params['entry_type'] in ['cci', 'momentum', 'volatility']:
 
             # Set the entry label
-            entry_label = (str(params['entry_period'])
-                           +'-day '
-                           +str(int(params['entry_threshold']*100))
-                           +'% : '
-                           +default_dict['df_entry_signal_labels'][
-                               params['entry_type']])
+            entry_label = (
+                str(params['entry_period'])
+                +'-day '
+                +str(int(params['entry_threshold']*100))
+                +'% : '
+                +default_dict['df_entry_signal_labels'][params['entry_type']]
+                )
 
 
         # MACD
         elif params['entry_type'] == 'macd':
 
             # Set the entry label
-            entry_label = (str(params['macd_params'][0])
-                           +'-'
-                           +str(params['macd_params'][1])
-                           +'-'
-                           +str(params['macd_params'][2])
-                           +' : '
-                           +default_dict['df_entry_signal_labels'][
-                               params['entry_type']])
+            entry_label = (
+                str(params['macd_params'][0])
+                +'-'
+                +str(params['macd_params'][1])
+                +'-'
+                +str(params['macd_params'][2])
+                +' : '
+                +default_dict['df_entry_signal_labels'][params['entry_type']]
+                )
 
         # Otherwise raise an error
         else:
@@ -204,68 +208,73 @@ class Labels():
         if params['exit_type'] == 'sar':
 
             # Set the exit label
-            exit_label = (str(params['exit_period'])
-                          +'-day '
-                          +str(np.round(params[
-                              'exit_acceleration_factor'] * 100, 1))
-                          +'% AF '
-                          +default_dict['df_exit_signal_labels'][
-                              params['exit_type']])
+            exit_label = (
+                str(params['exit_period'])
+                +'-day '
+                +str(np.round(params['exit_acceleration_factor'] * 100, 1))
+                +'% AF '
+                +default_dict['df_exit_signal_labels'][params['exit_type']]
+                )
 
 
         # Stochastic Crossover and Trailing Relative Strength Index
         elif params['exit_type'] in ['stoch_cross', 'rsi_trail']:
 
             # Set the exit label
-            exit_label = (str(params['exit_period'])
-                           +'-day '
-                           +str(params['exit_overbought'])
-                           +'-'
-                           +str(params['exit_oversold'])
-                           +' : '
-                           +default_dict['df_exit_signal_labels'][
-                               params['exit_type']])
+            exit_label = (
+                str(params['exit_period'])
+                +'-day '
+                +str(params['exit_overbought'])
+                +'-'
+                +str(params['exit_oversold'])
+                +' : '
+                +default_dict['df_exit_signal_labels'][params['exit_type']]
+                )
 
 
         # Volatility
         elif params['exit_type'] in ['volatility']:
 
             # Set the exit label
-            exit_label = (str(params['exit_period'])
-                          +'-day '
-                          +str(int(params['exit_threshold']*100))
-                          +'% : '
-                          +default_dict['df_exit_signal_labels'][
-                              params['exit_type']])
+            exit_label = (
+                str(params['exit_period'])
+                +'-day '
+                +str(int(params['exit_threshold']*100))
+                +'% : '
+                +default_dict['df_exit_signal_labels'][params['exit_type']]
+                )
 
 
         # Trailing Stop and Profit Target
         elif params['exit_type'] in ['trailing_stop', 'profit_target']:
 
             # Set the exit label
-            exit_label = ('$'
-                          +str(int(params['exit_amount']))
-                          +' '
-                          +default_dict['df_exit_signal_labels'][
-                               params['exit_type']])
+            exit_label = (
+                '$'
+                +str(int(params['exit_amount']))
+                +' '
+                +default_dict['df_exit_signal_labels'][params['exit_type']]
+                )
 
 
         # Support/Resistance, Key Reversal Day and n-Day Range
         elif params['exit_type'] in ['sup_res', 'key_reversal', 'nday_range']:
 
             # Set the exit label
-            exit_label = (str(params['exit_period'])
-                          +'-day '
-                          +default_dict['df_exit_signal_labels'][
-                              params['exit_type']])
+            exit_label = (
+                str(params['exit_period'])
+                +'-day '
+                +default_dict['df_exit_signal_labels'][params['exit_type']]
+                )
 
         # Random exit
         elif params['exit_type'] in ['random']:
 
             # Set the exit label
-            exit_label = (default_dict['df_exit_signal_labels'][
-                params['exit_type']]
-                +' exit')
+            exit_label = (
+                default_dict['df_exit_signal_labels'][params['exit_type']]
+                +' exit'
+                )
 
         # Otherwise raise an error
         else:
@@ -280,33 +289,31 @@ class Labels():
         default_dict: dict) -> str:
 
         # Stop labels
-
         # Initial Dollar, Breakeven, Trailing Close and Trailing High Low
-        if params['stop_type'] in ['initial_dollar', 'breakeven',
-                                   'trail_close', 'trail_high_low']:
+        if params['stop_type'] in [
+            'initial_dollar', 'breakeven', 'trail_close', 'trail_high_low']:
 
             # Set the stop label
-            stop_label = ('$'
-                          +str(int(params['stop_amount']))
-                          +' '
-                          +default_dict['df_stop_signal_labels'][
-                               params['stop_type']])
-
+            stop_label = (
+                '$'
+                +str(int(params['stop_amount']))
+                +' '
+                +default_dict['df_stop_signal_labels'][params['stop_type']]
+                )
 
         # Support / Resistance and Immediate Profit
         elif params['stop_type'] in ['sup_res', 'immediate_profit']:
 
             # Set the stop label
-            stop_label = (str(params['stop_period'])
-                          +'-day '
-                          +default_dict['df_stop_signal_labels'][
-                              params['stop_type']])
-
+            stop_label = (
+                str(params['stop_period'])
+                +'-day '
+                +default_dict['df_stop_signal_labels'][params['stop_type']]
+                )
 
         # Otherwise raise an error
         else:
             raise ValueError("Please enter a valid stop type")
-
 
         return stop_label
 
@@ -330,23 +337,27 @@ class Labels():
         if params['position_type'] == 'equity_constant':
             params['position_size_label'] = (
                 str(int(params['equity_inv_perc'] * 100))
-                +'% Starting Equity / Initial Trade Entry Price')
+                +'% Starting Equity / Initial Trade Entry Price'
+                )
 
         elif params['position_type'] == 'equity_variable':
             params['position_size_label'] = (
                 str(int(params['equity_inv_perc'] * 100))
-                +'% Starting Equity / Trade Entry Price')
+                +'% Starting Equity / Trade Entry Price'
+                )
 
         elif params['position_type'] == 'atr':
             params['position_size_label'] = (
                 str(params['atr_pos_size'])
                 +' day ATR : '
                 +str(np.round(params['position_risk_bps'] / 100, 2))
-                +'% risk')
+                +'% risk'
+                )
         else:
             params['position_size_label'] = (
                 str(params['fixed_pos_size'])
-                +' contracts fixed size')
+                +' contracts fixed size'
+                )
 
         return params
 
@@ -429,19 +440,20 @@ class Reformat():
         sod = pos_dict['start_of_day_position']
         tact = pos_dict['trade_action']
         eod = pos_dict['end_of_day_position']
+        pos_size = np.array(position_size)
         start_of_day_position = np.array([0] * len(sod), dtype=int)
         trade_action = np.array([0] * len(sod), dtype=int)
         end_of_day_position = np.array([0] * len(sod), dtype=int)
 
         for row in range(1, len(sod)):
             start_of_day_position[row] = (
-                sod[row] * position_size.iloc[row-1]
+                sod[row] * pos_size[row-1]
                 )
             if tact[row] != 0:
                 trade_action[row] = (
-                    (-eod[row-1] * position_size.iloc[row-1]) + (
+                    (-eod[row-1] * pos_size[row-1]) + (
                         (tact[row] + eod[row-1]) *
-                        position_size.iloc[row])
+                        pos_size[row])
                     )
             end_of_day_position[row] = (
                 start_of_day_position[row] + trade_action[row])
