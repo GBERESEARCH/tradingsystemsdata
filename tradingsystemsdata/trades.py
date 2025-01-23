@@ -44,7 +44,7 @@ class Trades():
         trade_count = 0
 
         # For each valid row in the data
-        for row in range(start + 1, len(prices)):
+        for row in range(start, len(prices)):
 
             # If today's position is zero
             if eod_pos_np[row] == 0:
@@ -227,7 +227,7 @@ class Trades():
         flag = True
 
         # For each row in the data
-        for row in range(start, len(prices)):
+        for row in range(0, len(prices)):
 
             # Find the row that relates to the trade exit
             trade_num = trade_number[row]

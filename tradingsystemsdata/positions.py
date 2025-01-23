@@ -55,7 +55,7 @@ class Positions():
         end_of_day_position = np.array([0]*len(prices))
 
         # For each valid row in the data
-        for row in range(start + 1, len(prices)):
+        for row in range(start, len(prices)):
 
             # The start of day position is equal to the close of day position
             # of the previous day
@@ -496,7 +496,7 @@ class Positions():
                     (params['equity'] / params['per_contract_margin']) * 0.15)
             else:
                 max_contracts[row] = math.ceil(
-                    (params['equity'] * params['margin_%'])
+                    (params['equity'] * params['margin_perc'] / 100)
                     / close[row])
 
             # If there is a trade on
@@ -515,8 +515,8 @@ class Positions():
                         # Size the position for each trade based on a fraction
                         # of the ATR
                         position_size[row] = min(math.ceil(
-                            (params['equity'] * (params['position_risk_bps']
-                                                / 10000))
+                            (params['equity'] * (params['position_risk_perc']
+                                                / 100))
                             / (position_ATR[row]
                             * params['contract_point_value'])),
                             max_contracts[row])
