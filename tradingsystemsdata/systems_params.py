@@ -24,7 +24,7 @@ system_params_dict = {
     'df_fixed_pos_size':5,
     'df_atr_pos_size':14,
     'df_position_type':'atr',
-    'df_margin_%':0.2,
+    'df_margin_perc':20.0,
     'df_ticker_source':'norgate',
     'df_bench_source':'norgate',
     'df_slippage':5.0,
@@ -49,7 +49,7 @@ system_params_dict = {
     'df_sip_price':False,
     'df_signals':True,
     'df_api_key':'',
-    'df_position_risk_bps':500,
+    'df_position_risk_perc':5.0,
     'df_equity_inv_perc':0.75,
 
     # Columns names used for strategy indicators
@@ -292,9 +292,9 @@ system_params_dict = {
         'sip_price':False,
         'signals':True,
         'api_key':'',
-        'position_risk_bps':500,
+        'position_risk_perc':5.0,
         'equity_inv_perc':0.75,
-        'margin_%':0.2,
+        'margin_perc':20.0,
         'contract_months':{
             '01':'F',
             '02':'G',

@@ -350,7 +350,7 @@ class Labels():
             params['position_size_label'] = (
                 str(params['atr_pos_size'])
                 +' day ATR : '
-                +str(np.round(params['position_risk_bps'] / 100, 2))
+                +str(np.round(params['position_risk_perc'], 2))
                 +'% risk'
                 )
         else:

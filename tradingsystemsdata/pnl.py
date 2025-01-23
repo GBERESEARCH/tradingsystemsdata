@@ -668,7 +668,7 @@ class Profit():
             initial_margin = position_size * params['per_contract_margin']
 
         else:
-            initial_margin = close * position_size * params['margin_%']
+            initial_margin = close * position_size * params['margin_perc'] / 100
 
         for row in range(params['first_trade_start'], len(prices)):
             total_margin[row] = (
