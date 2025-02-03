@@ -18,9 +18,10 @@ class Markets():
     @classmethod
     def create_base_data(
         cls,
-        ticker: str | None = None,
-        source: str | None = None,
-        params: dict | None = None) -> tuple[pd.DataFrame, dict]:
+        ticker: str,
+        source: str,
+        params: dict,
+        benchmark_flag: bool) -> tuple[pd.DataFrame, dict]:
         """
         Create DataFrame of OHLC prices from NorgateData or Yahoo Finance
 
@@ -49,29 +50,37 @@ class Markets():
             Returns OHLC DataFrame.
 
         """
+        asset_type = params['asset_type']
+        if benchmark_flag:
+            asset_type = 'equity'
+
+        if asset_type == 'fx':
+            input_ticker = params['ccy_1']+params['ccy_2']+'=X'    
+        else:
+            input_ticker = ticker
 
         # If a valid source has been provided
         #try:
         # Extract data from Norgate
         if source == 'norgate':
             prices = NorgateFunctions.return_norgate_data(
-                ticker=ticker, params=params) #type: ignore
+                ticker=ticker, params=params) 
 
         # Extract data from Yahoo Finance
         elif source == 'yahoo':
             prices = cls.return_yahoo_data(
-                ticker=ticker, params=params) #type: ignore
+                ticker=input_ticker, params=params) 
 
         # Extract data from AlphaVantage
         elif source == 'alpha':
             prices = cls.return_alphavantage_data(
-                ticker=ticker, params=params) #type: ignore
+                ticker=ticker, params=params) 
 
         else:
             raise ValueError(
                 'Select a data source from yahoo, norgate or alpha')
 
-        return prices, params #type: ignore
+        return prices, params 
 
 
     @classmethod
@@ -160,17 +169,31 @@ class Markets():
         #         .loc[:, ['Date','Open','High','Low','Close','Volume']] \
         #         .set_index('Date')
 
+        print("Ticker: ", ticker)
+
         # Initialize a yFinance object with the supplied ticker
         asset = yf.Ticker(ticker)
 
         # Extract historic prices
-        prices = asset.history(start=params['start_date'], end=params['end_date'])
+        prices = asset.history(
+            start=params['start_date'], end=params['end_date']
+            )
 
         # Reformat columns
         prices = prices.drop(['Dividends', 'Stock Splits'], axis=1)
 
         # Set Index to Datetime
         prices.index = pd.to_datetime(prices.index)
+
+        try:
+            prices.index = prices.index.tz_localize(None)
+            prices.index = prices.index.normalize() #type: ignore
+        except: 
+            try:
+                prices.index = prices.index.tz_convert(None)
+                prices.index = prices.index.normalize() #type: ignore
+            except:
+                pass
 
         return prices
 
@@ -267,6 +290,16 @@ class Markets():
 
         # Trim data to specified dates
         prices = prices.loc[start:end]
+
+        try:
+            prices.index = prices.index.tz_localize(None) #type: ignore
+            prices.index = prices.index.normalize() #type: ignore
+        except: 
+            try:
+                prices.index = prices.index.tz_convert(None) #type: ignore
+                prices.index = prices.index.normalize() #type: ignore
+            except:
+                pass
 
         return prices
 
@@ -372,12 +405,12 @@ class Markets():
             response_dict[header], orient='index')
 
         # Select the USD OHLC columns
-        prices = prices[
-            [prices.columns[1], prices.columns[3], prices.columns[5],
-             prices.columns[7]]]
+        # prices = prices[
+        #     [prices.columns[1], prices.columns[3], prices.columns[5],
+        #      prices.columns[7]]]
 
         # Set column names
-        prices.columns = ['Open', 'High', 'Low', 'Close']
+        prices.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
 
         # Set datatype to float
         prices = prices.astype(float)
@@ -495,6 +528,18 @@ class NorgateFunctions():
             start_date=params['start_date'],
             end_date=params['end_date'],
             format=timeseriesformat)
+
+        try:
+            prices.index = prices.index.tz_localize(None) #type: ignore
+            prices.index = prices.index.normalize() #type: ignore
+
+        except: 
+            try:
+                prices.index = prices.index.tz_convert(None) #type: ignore
+                prices.index = prices.index.normalize() #type: ignore
+
+            except:
+                pass
 
         return prices #type: ignore
 
