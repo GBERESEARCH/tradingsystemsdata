@@ -278,8 +278,10 @@ class PerfReport():
         norgate_name_dict: dict) -> dict:
 
         # Contract and strategy details
-        if (params['ticker_source'] == 'alpha'
-            and params['asset_type'] in ['fx', 'crypto']):
+        if ((params['ticker_source'] == 'alpha'
+            and params['asset_type'] in ['fx', 'crypto']) 
+            or (params['ticker_source'] == 'yahoo'
+            and params['asset_type'] in ['fx'])):
             perf_dict['contract'] = params['ccy_1'] + params['ccy_2']
         else:
             perf_dict['contract'] = params['ticker']
