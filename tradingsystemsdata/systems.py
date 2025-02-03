@@ -6,17 +6,16 @@ results in table and graph form.
 
 # Imports
 import copy
-import pandas as pd
-from tradingsystemsdata.graph_data import GraphData
-from tradingsystemsdata.marketdata import Markets, NorgateFunctions
+
+from tradingsystemsdata.marketdata import NorgateFunctions
 from tradingsystemsdata.positions import Positions
 from tradingsystemsdata.pnl import Profit
 from tradingsystemsdata.reports import PerfReport
-from tradingsystemsdata.signals import Signals
+from tradingsystemsdata.signals import Signals, CalculateSignalData
 from tradingsystemsdata.systems_params import system_params_dict
 from tradingsystemsdata.targets import TradeTargets
 from tradingsystemsdata.trades import Trades
-from tradingsystemsdata.utils import Labels, Dates, Reformat
+from tradingsystemsdata.utils import Setup, Labels, Reformat
 
 
 class TestStrategy():
@@ -132,25 +131,24 @@ class TestStrategy():
         # Import dictionary of default parameters
         self.default_dict = copy.deepcopy(system_params_dict)
 
-        self.params = {}
-        self.tables = {}
-        self.labels = {}
-
-        # Longnames for Norgate Tickers
-        self.norgate_name_dict = {}
-
         # Generate backtest
-        self.run_backtest(**kwargs)
+        params, tables, labels, norgate_name_dict = self.run_backtest(**kwargs)
 
         # Generate signals when graph isn't drawn.    
-        self.generate_signals(
+        params = CalculateSignalData.generate_signals(
             default_dict=self.default_dict, 
-            params=self.params, 
-            tables=self.tables
+            params=params, 
+            tables=tables
             )
+        
+        self.params = params
+        self.tables = tables
+        self.labels = labels
+        self.norgate_name_dict = norgate_name_dict
+ 
 
-
-    def run_backtest(self, **kwargs):
+    @staticmethod
+    def run_backtest(**kwargs):
         """
         Generate strategy backtest
 
@@ -168,26 +166,33 @@ class TestStrategy():
 
         """
 
+        params = {}
+        tables = {}
+        labels = {}
+
+        # Longnames for Norgate Tickers
+        norgate_name_dict = {}
+
         # Store initial inputs
         inputs = {}
         for key, value in kwargs.items():
             inputs[key] = value
 
         # Initialise system parameters
-        params = self._init_params(inputs)
+        params = Setup.init_params(inputs)
 
         # Longnames for Norgate Tickers
         if params['ticker_source'] == 'norgate':
-            self.norgate_name_dict = NorgateFunctions.get_norgate_name_dict()
+            norgate_name_dict = NorgateFunctions.get_norgate_name_dict()
             params['asset_type'] = 'commodity'
 
-        if params['ticker_source'] == 'yahoo':
-            params['asset_type'] = 'equity'
+        # if params['ticker_source'] == 'yahoo':
+        #     params['asset_type'] = 'equity'
 
         # Create DataFrame of OHLC prices from NorgateData or Yahoo Finance
         tables = kwargs.get('tables', {})
 
-        params, tables = self.prepare_data(params, tables)
+        params, tables = Setup.prepare_data(params, tables)
 
         # Set the strategy labels
         labels  = {}
@@ -244,187 +249,13 @@ class TestStrategy():
         # Create dictionary of performance data
         tables['perf_dict'] = PerfReport.performance_data(
             tables=tables, params=params, labels=labels,
-            norgate_name_dict=self.norgate_name_dict)
+            norgate_name_dict=norgate_name_dict)
 
-        self.params = params
-        self.tables = tables
-        self.labels = labels
+        return params, tables, labels, norgate_name_dict
 
 
     @staticmethod
-    def _init_params(inputs: dict) -> dict:
-        """
-        Initialise parameter dictionary
-
-        Parameters
-        ----------
-        inputs : Dict
-            Dictionary of parameters supplied to the function.
-
-        Returns
-        -------
-        params : Dict
-            Dictionary of parameters.
-
-        """
-        # Copy the default parameters
-        params = copy.deepcopy(system_params_dict['df_params'])
-
-        # Extract the entry, exit and stop signal dictionaries
-        entry_signal_dict = system_params_dict['df_entry_signal_dict']
-        exit_signal_dict = system_params_dict['df_exit_signal_dict']
-        stop_signal_dict = system_params_dict['df_stop_signal_dict']
-
-        # For all the supplied arguments
-        for key, value in inputs.items():
-
-            # Replace the default parameter with that provided
-            params[key] = value
-
-        # Set the start and end dates to None if not supplied
-        if 'start_date' not in inputs.keys():
-            params['start_date'] = None
-
-        if 'end_date' not in inputs.keys():
-            params['end_date'] = None
-
-        # Create a list of the entry, exit and stop types
-        types = [
-            params['entry_type'], params['exit_type'], params['stop_type']]
-
-        # For each parameter in params
-        for param in params.keys():
-
-            # If the parameter has not been supplied as an input and it is not
-            # the entry exit or stop type
-            if (param not in inputs.keys()
-                and param not in types):
-
-                # If the parameter takes a specific value for the particular
-                # entry type then replace the default with this value
-                if param in entry_signal_dict[types[0]].keys():
-                    params[param] = entry_signal_dict[types[0]][str(param)]
-
-                if params['exit_type'] is not None:
-                    # If the parameter takes a specific value for the
-                    # particular exit type then replace the default with this
-                    # value
-                    if param in exit_signal_dict[types[1]].keys():
-                        params[param] = exit_signal_dict[types[1]][str(param)]
-
-                if params['stop_type'] is not None:
-                    # If the parameter takes a specific value for the
-                    # particular stop type then replace the default with this
-                    # value
-                    if param in stop_signal_dict[types[2]].keys():
-                        params[param] = stop_signal_dict[types[2]][str(param)]
-
-        return params
-
-
-    @classmethod
-    def prepare_data(
-        cls,
-        params: dict,
-        tables: dict,
-        market_data: pd.DataFrame | None = None) -> tuple[dict, dict]:
-        """
-        Get market data ready to be analysed
-
-        Parameters
-        ----------
-        params : Dict
-            Dictionary of parameters.
-        tables : Dict
-            Dictionary of tables.
-        data : DataFrame, optional
-            DataFrame of OHLC data. The default is None.
-
-        Returns
-        -------
-        params : Dict
-            Dictionary of parameters.
-        tables : Dict
-            Dictionary of tables.
-
-        """
-        params = cls._prepare_dates(params=params, market_data=market_data)
-
-        params, tables = cls._prepare_ticker_data(
-            params=params, tables=tables, market_data=market_data)
-
-        params, tables = cls._prepare_benchmark_data(
-            params=params, tables=tables)
-
-        return params, tables
-
-
-    @staticmethod
-    def _prepare_dates(
-        params: dict,
-        market_data: pd.DataFrame | None = None) -> dict:
-
-        if market_data is None:
-            # Set the start and end dates if not provided
-            params['start_date'], params['end_date'] = Dates.date_set(
-                start_date=params['start_date'], end_date=params['end_date'],
-                lookback=params['lookback'])
-
-        else:
-            params['start_date'] = str(market_data[0][1].index[0].date())
-            params['end_date'] = str(market_data[0][1].index[-1].date())
-
-        return params
-
-
-    @staticmethod
-    def _prepare_ticker_data(
-        params: dict,
-        tables: dict,
-        market_data: pd.DataFrame | None = None) -> tuple[dict, dict]:
-
-        if params['input_data'] == 'reset':
-            # Reset the prices and benchmark tables to the source data
-            tables, params = Markets.reset_data(tables, params)
-
-        elif params['input_data'] == 'set':
-            tables['prices'] = market_data
-
-
-        else:
-            tables['prices'], params = Markets.create_base_data(
-                ticker=params['ticker'], source=params['ticker_source'],
-                params=params)
-
-            if params['ticker'][0] == '&':
-                params = NorgateFunctions.contract_data(
-                    ticker=params['ticker'], prices=tables['prices'],
-                    params=params)
-            else:
-                params['contract_point_value'] = 1
-
-        return params, tables
-
-
-    @staticmethod
-    def _prepare_benchmark_data(
-        params: dict,
-        tables: dict) -> tuple[dict, dict]:
-
-        # Extract benchmark data for Beta calculation
-        if params['ticker_source'] == 'norgate':
-            tables['benchmark'], params = Markets.create_base_data(
-                ticker=params['bench_ticker'], source=params['bench_source'],
-                params=params)
-        else:
-            tables['benchmark'], params = Markets.create_base_data(
-                ticker='SPY', source='yahoo',
-                params=params)
-
-        return params, tables
-
-
-    def performance_report(self):
+    def performance_report(input_dict: dict):
         """
         Display the performance report
 
@@ -439,275 +270,7 @@ class TestStrategy():
 
         """
         # Print out results
-        PerfReport.report_table(input_dict=self.tables['perf_dict'])
-
-
-    @classmethod
-    def generate_signals(cls, default_dict, tables, params):
-        """
-        Generate signals for data api when graph isn't drawn.
-
-        Parameters
-        ----------
-        params : Dict
-            Dictionary of parameters.
-        tables : Dict
-            Dictionary of tables.
-
-        Returns
-        -------
-        Updates params with graph_params and signal_dict.
-
-        """
-        # Dictionary to store entry signal data
-        es_dict = {}
-
-        # Entry labels
-        es_dict['entry_signal_labels'] = default_dict[
-            'df_entry_signal_labels']
-
-        # Entry signal indicator column names
-        es_dict['entry_signal_indicators'] = default_dict[
-            'df_entry_signal_indicators']
-
-        graph_params = GraphData.graph_variables(
-                prices=tables['prices'], entry_type=params['entry_type'],
-                entry_signal_indicators=es_dict['entry_signal_indicators'])
-        
-        # Create the trade signal points
-        signal_dict = GraphData.create_signals(
-            prices=tables['prices'], graph_params=graph_params)
-        
-        indicators = cls._get_indicators(
-            params=params, tables=tables, es_dict=es_dict)
-        
-        trade_data, trade_data_array = cls._get_trades(tables=tables)
-
-        params['es_dict'] = es_dict
-        params['graph_params'] = graph_params
-        params['signal_dict'] = signal_dict
-        params['indicators'] = indicators        
-        params['trade_data'] = trade_data        
-        params['trade_data_array'] = trade_data_array        
-
-        return params
-    
-    
-    @staticmethod
-    def _get_indicators(params, tables, es_dict):
-        indicators = {}
-
-        # Remove nan values from prices DataFrame
-        tables['prices'] = tables['prices'].bfill()
-
-        # If the entry is Parabolic SAR
-        if params['entry_type'] == 'sar':
-
-            # Extract the SAR series from the core DataFrame
-            sar_indicator = tables['prices'][
-                es_dict['entry_signal_indicators'][params['entry_type']]]
-        
-            indicators['sar_indicator'] = sar_indicator
-
-        # If the entry is Moving Average
-        if params['entry_type'] in ('2ma', '3ma', '4ma'):
-
-            # Extract the moving averages from the core DataFrame
-            ma_1 = tables['prices'][es_dict[
-                'entry_signal_indicators'][params['entry_type']][0]]
-            ma_2 = tables['prices'][es_dict[
-                'entry_signal_indicators'][params['entry_type']][1]]
-        
-            indicators['ma_1'] = ma_1
-            indicators['ma_2'] = ma_2
-
-            if params['entry_type'] in ('3ma', '4ma'):
-                ma_3 = tables['prices'][es_dict[
-                    'entry_signal_indicators'][params['entry_type']][2]]
-                
-                indicators['ma_3'] = ma_3
-
-                if params['entry_type'] == '4ma':
-                    ma_4 = tables['prices'][es_dict[
-                        'entry_signal_indicators'][params[
-                            'entry_type']][3]]
-                
-                    indicators['ma_4'] = ma_4
-
-        # If the entry is Channel Breakout
-        if params['entry_type'] == 'channel_breakout':
-
-            # Extract the Upper and Lower channel series from the core DataFrame
-            lower_channel = tables['prices'][
-                es_dict['entry_signal_indicators'][params[
-                    'entry_type']][0]]
-            upper_channel = tables['prices'][
-                es_dict['entry_signal_indicators'][params[
-                    'entry_type']][1]]
-        
-            indicators['lower_channel'] = lower_channel
-            indicators['upper_channel'] = upper_channel
-        
-        # If the entry involves Stochastics
-        if 'stoch' in params['entry_type']:
-
-            # Extract the slow k and slow d series from the core DataFrame
-            slow_k = tables['prices'][
-                es_dict['entry_signal_indicators'][params[
-                    'entry_type']][0]]
-            slow_d = tables['prices'][
-                es_dict['entry_signal_indicators'][params[
-                    'entry_type']][1]]
-        
-            indicators['slow_k'] = slow_k
-            indicators['slow_d'] = slow_d
-        
-        # If the entry is ADX
-        if params['entry_type'] == 'adx':
-
-            # Extract the adx, di+ and di- series from the core DataFrame
-            adx = tables['prices'][es_dict[
-                'entry_signal_indicators'][params[
-                    'entry_type']][0]]						
-            di_plus = tables['prices'][es_dict[
-                'entry_signal_indicators'][params[
-                    'entry_type']][1]] 						
-            di_minus = tables['prices'][es_dict[
-                'entry_signal_indicators'][params[
-                    'entry_type']][2]]
-            
-            indicators['adx'] = adx
-            indicators['di_plus'] = di_plus
-            indicators['di_minus'] = di_minus
-
-        # If the entry is MACD
-        if params['entry_type'] == 'macd':
-
-            # Extract the macd, signal and hist series from the core DataFrame
-            macd = tables['prices'][es_dict[
-                'entry_signal_indicators'][params[
-                    'entry_type']][0]]						
-            macd_signal = tables['prices'][es_dict[
-                'entry_signal_indicators'][params[
-                    'entry_type']][1]] 						
-            macd_hist = tables['prices'][es_dict[
-                'entry_signal_indicators'][params[
-                    'entry_type']][2]]
-            
-            indicators['macd'] = macd
-            indicators['macd_signal'] = macd_signal
-            indicators['macd_hist'] = macd_hist
-
-        # If the entry is RSI
-        if params['entry_type'] == 'rsi':
-
-            # Extract the RSI series from the core DataFrame
-            rsi = tables['prices'][
-                es_dict['entry_signal_indicators'][params['entry_type']]]
-        
-            indicators['rsi'] = rsi
-        
-        # If the entry is CCI
-        if params['entry_type'] == 'cci':
-
-            # Extract the CCI series from the core DataFrame
-            cci = tables['prices'][
-                es_dict['entry_signal_indicators'][params['entry_type']]]
-        
-            indicators['cci'] = cci
-        
-        # If the entry is momentum
-        if params['entry_type'] == 'momentum':
-
-            # Extract the momentum series from the core DataFrame
-            momentum = tables['prices'][
-                es_dict['entry_signal_indicators'][params['entry_type']]]
-        
-            indicators['momentum'] = momentum
-        
-        # If the entry is volatility
-        if params['entry_type'] == 'volatility':
-
-            # Extract the volatility series from the core DataFrame
-            volatility = tables['prices'][
-                es_dict['entry_signal_indicators'][params['entry_type']]]
-        
-            indicators['volatility'] = volatility
-
-        return indicators    
-    
-    @staticmethod
-    def _get_trades(tables):
-        prices = tables['prices']
-        trade_data = {
-            'entry_dates': [],
-            'entry_prices': [],
-            'exit_dates': [],
-            'exit_prices': [],
-            'position_sizes': [],
-            'abs_pos_sizes': [],
-            'profits': [],
-            'directions': []
-            }
-
-        for row in range(1, len(prices)):
-            if (prices['raw_trade_number'].iloc[row] > 
-                prices['raw_trade_number'].iloc[row-1]):
-                trade_data['entry_dates'].append(str(prices.index[row].date()))
-                trade_data['entry_prices'].append(float(
-                    prices['Open'].iloc[row]))
-                trade_data['position_sizes'].append(int(
-                    prices['end_of_day_position'].iloc[row]))
-                trade_data['abs_pos_sizes'].append(abs(int(
-                    prices['end_of_day_position'].iloc[row])))
-                direction = ('Long' 
-                             if prices['end_of_day_position'].iloc[row] > 0 else 'Short')
-                trade_data['directions'].append(direction)
-
-            if (prices['trade_number'].iloc[row] == 0 
-                and prices['trade_number'].iloc[row-1] !=0):
-                trade_data['exit_dates'].append(str(prices.index[row-1].date()))
-                trade_data['exit_prices'].append(float(
-                    prices['Open'].iloc[row-1]))
-                trade_data['profits'].append(float(
-                    prices['cumulative_trade_pnl'].iloc[row-1]))
-
-
-            elif (prices['trade_number'].iloc[row] == 
-                  (prices['trade_number'].iloc[row-1] + 1) 
-                  and prices['trade_number'].iloc[row-1] !=0 
-                  and row != len(prices)-1):
-                trade_data['exit_dates'].append(str(prices.index[row].date()))
-                trade_data['exit_prices'].append(float(
-                    prices['Open'].iloc[row]))
-                trade_data['profits'].append(float(
-                    prices['cumulative_trade_pnl'].iloc[row]))
-
-            else:
-                if (row == len(prices)-1 
-                    and prices['trade_number'].iloc[-1] !=0):
-                    trade_data['exit_dates'].append(str(
-                        prices.index[-1].date()))
-                    trade_data['exit_prices'].append(float(
-                        prices['Close'].iloc[-1]))
-                    trade_data['profits'].append(float(
-                        prices['cumulative_trade_pnl'].iloc[-1]))
-
-        trade_data_array = []
-
-        for index, item in enumerate(trade_data['entry_dates']):
-            trade_dict = {}
-            trade_dict['entry_date'] = item
-            trade_dict['entry_price'] = trade_data['entry_prices'][index]
-            trade_dict['exit_date'] = trade_data['exit_dates'][index]
-            trade_dict['exit_price'] = trade_data['exit_prices'][index]
-            trade_dict['position_size'] = trade_data['position_sizes'][index]
-            trade_dict['abs_pos_size'] = trade_data['abs_pos_sizes'][index]
-            trade_dict['profit'] = trade_data['profits'][index]
-            trade_dict['direction'] = trade_data['directions'][index]
-            trade_data_array.append(trade_dict)
-
-        return trade_data, trade_data_array 
+        PerfReport.report_table(input_dict=input_dict)
 
 
 class TestPortfolio():

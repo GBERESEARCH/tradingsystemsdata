@@ -2,11 +2,190 @@
 Utility functions
 
 """
-
+import copy
 import datetime as dt
 import numpy as np
 import pandas as pd
 from pandas.tseries.offsets import BDay
+from tradingsystemsdata.systems_params import system_params_dict
+from tradingsystemsdata.marketdata import Markets, NorgateFunctions
+
+class Setup():
+    """
+    Methods to initialise system
+    """
+    @staticmethod
+    def init_params(inputs: dict) -> dict:
+        """
+        Initialise parameter dictionary
+
+        Parameters
+        ----------
+        inputs : Dict
+            Dictionary of parameters supplied to the function.
+
+        Returns
+        -------
+        params : Dict
+            Dictionary of parameters.
+
+        """
+        # Copy the default parameters
+        params = copy.deepcopy(system_params_dict['df_params'])
+
+        # Extract the entry, exit and stop signal dictionaries
+        entry_signal_dict = system_params_dict['df_entry_signal_dict']
+        exit_signal_dict = system_params_dict['df_exit_signal_dict']
+        stop_signal_dict = system_params_dict['df_stop_signal_dict']
+
+        # For all the supplied arguments
+        for key, value in inputs.items():
+
+            # Replace the default parameter with that provided
+            params[key] = value
+
+        # Set the start and end dates to None if not supplied
+        if 'start_date' not in inputs.keys():
+            params['start_date'] = None
+
+        if 'end_date' not in inputs.keys():
+            params['end_date'] = None
+
+        # Create a list of the entry, exit and stop types
+        types = [
+            params['entry_type'], params['exit_type'], params['stop_type']]
+
+        # For each parameter in params
+        for param in params.keys():
+
+            # If the parameter has not been supplied as an input and it is not
+            # the entry exit or stop type
+            if (param not in inputs.keys()
+                and param not in types):
+
+                # If the parameter takes a specific value for the particular
+                # entry type then replace the default with this value
+                if param in entry_signal_dict[types[0]].keys():
+                    params[param] = entry_signal_dict[types[0]][str(param)]
+
+                if params['exit_type'] is not None:
+                    # If the parameter takes a specific value for the
+                    # particular exit type then replace the default with this
+                    # value
+                    if param in exit_signal_dict[types[1]].keys():
+                        params[param] = exit_signal_dict[types[1]][str(param)]
+
+                if params['stop_type'] is not None:
+                    # If the parameter takes a specific value for the
+                    # particular stop type then replace the default with this
+                    # value
+                    if param in stop_signal_dict[types[2]].keys():
+                        params[param] = stop_signal_dict[types[2]][str(param)]
+
+        return params
+
+
+    @classmethod
+    def prepare_data(
+        cls,
+        params: dict,
+        tables: dict,
+        market_data: pd.DataFrame | None = None) -> tuple[dict, dict]:
+        """
+        Get market data ready to be analysed
+
+        Parameters
+        ----------
+        params : Dict
+            Dictionary of parameters.
+        tables : Dict
+            Dictionary of tables.
+        data : DataFrame, optional
+            DataFrame of OHLC data. The default is None.
+
+        Returns
+        -------
+        params : Dict
+            Dictionary of parameters.
+        tables : Dict
+            Dictionary of tables.
+
+        """
+        params = cls._prepare_dates(params=params, market_data=market_data)
+
+        params, tables = cls._prepare_ticker_data(
+            params=params, tables=tables, market_data=market_data)
+
+        params, tables = cls._prepare_benchmark_data(
+            params=params, tables=tables)
+
+        return params, tables
+
+
+    @staticmethod
+    def _prepare_dates(
+        params: dict,
+        market_data: pd.DataFrame | None = None) -> dict:
+
+        if market_data is None:
+            # Set the start and end dates if not provided
+            params['start_date'], params['end_date'] = Dates.date_set(
+                start_date=params['start_date'], end_date=params['end_date'],
+                lookback=params['lookback'])
+
+        else:
+            params['start_date'] = str(market_data[0][1].index[0].date())
+            params['end_date'] = str(market_data[0][1].index[-1].date())
+
+        return params
+
+
+    @staticmethod
+    def _prepare_ticker_data(
+        params: dict,
+        tables: dict,
+        market_data: pd.DataFrame | None = None) -> tuple[dict, dict]:
+
+        if params['input_data'] == 'reset':
+            # Reset the prices and benchmark tables to the source data
+            tables, params = Markets.reset_data(tables, params)
+
+        elif params['input_data'] == 'set':
+            tables['prices'] = market_data
+
+        else:
+            tables['prices'], params = Markets.create_base_data(
+                ticker=params['ticker'], source=params['ticker_source'],
+                params=params, benchmark_flag=False)
+
+            if params['ticker'][0] == '&':
+                params = NorgateFunctions.contract_data(
+                    ticker=params['ticker'], prices=tables['prices'],
+                    params=params)
+            else:
+                params['contract_point_value'] = 1
+
+        return params, tables
+
+
+    @staticmethod
+    def _prepare_benchmark_data(
+        params: dict,
+        tables: dict) -> tuple[dict, dict]:
+
+        # Extract benchmark data for Beta calculation
+        print("Ticker source: ", params['ticker_source'])
+        if params['ticker_source'] == 'norgate':
+            tables['benchmark'], params = Markets.create_base_data(
+                ticker=params['norgate_bench_ticker'], source=params['bench_source'],
+                params=params, benchmark_flag=True)
+        else:
+            tables['benchmark'], params = Markets.create_base_data(
+                ticker=params['yahoo_bench_ticker'], source='yahoo',
+                params=params, benchmark_flag=True)
+
+        return params, tables
+
 
 class Labels():
     """

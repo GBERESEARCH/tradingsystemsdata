@@ -5,6 +5,7 @@ Entry and Exit signals
 import numpy as np
 import pandas as pd
 from tradingsystemsdata.dollar_exits import DollarExit
+from tradingsystemsdata.graph_data import GraphData
 from tradingsystemsdata.indicator_entries import IndicatorEntry
 from tradingsystemsdata.indicator_exits import IndicatorExit
 from tradingsystemsdata.ma_entries import MovingAverageEntry
@@ -590,3 +591,277 @@ class Signals():
             trade_signals=trade_signals)
 
         return tables
+
+
+class CalculateSignalData():
+    """
+    Generate signals for data api when graph isn't drawn.
+    """
+    
+    @classmethod
+    def generate_signals(cls, default_dict, tables, params):
+        """
+        Generate signals for data api when graph isn't drawn.
+
+        Parameters
+        ----------
+        params : Dict
+            Dictionary of parameters.
+        tables : Dict
+            Dictionary of tables.
+
+        Returns
+        -------
+        Updates params with graph_params and signal_dict.
+
+        """
+        # Dictionary to store entry signal data
+        es_dict = {}
+
+        # Entry labels
+        es_dict['entry_signal_labels'] = default_dict[
+            'df_entry_signal_labels']
+
+        # Entry signal indicator column names
+        es_dict['entry_signal_indicators'] = default_dict[
+            'df_entry_signal_indicators']
+
+        graph_params = GraphData.graph_variables(
+                prices=tables['prices'], entry_type=params['entry_type'],
+                entry_signal_indicators=es_dict['entry_signal_indicators'])
+        
+        # Create the trade signal points
+        signal_dict = GraphData.create_signals(
+            prices=tables['prices'], graph_params=graph_params)
+        
+        indicators = cls._get_indicators(
+            params=params, tables=tables, es_dict=es_dict)
+        
+        trade_data, trade_data_array = cls._get_trades(tables=tables)
+
+        params['es_dict'] = es_dict
+        params['graph_params'] = graph_params
+        params['signal_dict'] = signal_dict
+        params['indicators'] = indicators        
+        params['trade_data'] = trade_data        
+        params['trade_data_array'] = trade_data_array        
+
+        return params
+    
+    
+    @staticmethod
+    def _get_indicators(params, tables, es_dict):
+        indicators = {}
+
+        # Remove nan values from prices DataFrame
+        tables['prices'] = tables['prices'].bfill()
+
+        # If the entry is Parabolic SAR
+        if params['entry_type'] == 'sar':
+
+            # Extract the SAR series from the core DataFrame
+            sar_indicator = tables['prices'][
+                es_dict['entry_signal_indicators'][params['entry_type']]]
+        
+            indicators['sar_indicator'] = sar_indicator
+
+        # If the entry is Moving Average
+        if params['entry_type'] in ('2ma', '3ma', '4ma'):
+
+            # Extract the moving averages from the core DataFrame
+            ma_1 = tables['prices'][es_dict[
+                'entry_signal_indicators'][params['entry_type']][0]]
+            ma_2 = tables['prices'][es_dict[
+                'entry_signal_indicators'][params['entry_type']][1]]
+        
+            indicators['ma_1'] = ma_1
+            indicators['ma_2'] = ma_2
+
+            if params['entry_type'] in ('3ma', '4ma'):
+                ma_3 = tables['prices'][es_dict[
+                    'entry_signal_indicators'][params['entry_type']][2]]
+                
+                indicators['ma_3'] = ma_3
+
+                if params['entry_type'] == '4ma':
+                    ma_4 = tables['prices'][es_dict[
+                        'entry_signal_indicators'][params[
+                            'entry_type']][3]]
+                
+                    indicators['ma_4'] = ma_4
+
+        # If the entry is Channel Breakout
+        if params['entry_type'] == 'channel_breakout':
+
+            # Extract the Upper and Lower channel series from the core DataFrame
+            lower_channel = tables['prices'][
+                es_dict['entry_signal_indicators'][params[
+                    'entry_type']][0]]
+            upper_channel = tables['prices'][
+                es_dict['entry_signal_indicators'][params[
+                    'entry_type']][1]]
+        
+            indicators['lower_channel'] = lower_channel
+            indicators['upper_channel'] = upper_channel
+        
+        # If the entry involves Stochastics
+        if 'stoch' in params['entry_type']:
+
+            # Extract the slow k and slow d series from the core DataFrame
+            slow_k = tables['prices'][
+                es_dict['entry_signal_indicators'][params[
+                    'entry_type']][0]]
+            slow_d = tables['prices'][
+                es_dict['entry_signal_indicators'][params[
+                    'entry_type']][1]]
+        
+            indicators['slow_k'] = slow_k
+            indicators['slow_d'] = slow_d
+        
+        # If the entry is ADX
+        if params['entry_type'] == 'adx':
+
+            # Extract the adx, di+ and di- series from the core DataFrame
+            adx = tables['prices'][es_dict[
+                'entry_signal_indicators'][params[
+                    'entry_type']][0]]						
+            di_plus = tables['prices'][es_dict[
+                'entry_signal_indicators'][params[
+                    'entry_type']][1]] 						
+            di_minus = tables['prices'][es_dict[
+                'entry_signal_indicators'][params[
+                    'entry_type']][2]]
+            
+            indicators['adx'] = adx
+            indicators['di_plus'] = di_plus
+            indicators['di_minus'] = di_minus
+
+        # If the entry is MACD
+        if params['entry_type'] == 'macd':
+
+            # Extract the macd, signal and hist series from the core DataFrame
+            macd = tables['prices'][es_dict[
+                'entry_signal_indicators'][params[
+                    'entry_type']][0]]						
+            macd_signal = tables['prices'][es_dict[
+                'entry_signal_indicators'][params[
+                    'entry_type']][1]] 						
+            macd_hist = tables['prices'][es_dict[
+                'entry_signal_indicators'][params[
+                    'entry_type']][2]]
+            
+            indicators['macd'] = macd
+            indicators['macd_signal'] = macd_signal
+            indicators['macd_hist'] = macd_hist
+
+        # If the entry is RSI
+        if params['entry_type'] == 'rsi':
+
+            # Extract the RSI series from the core DataFrame
+            rsi = tables['prices'][
+                es_dict['entry_signal_indicators'][params['entry_type']]]
+        
+            indicators['rsi'] = rsi
+        
+        # If the entry is CCI
+        if params['entry_type'] == 'cci':
+
+            # Extract the CCI series from the core DataFrame
+            cci = tables['prices'][
+                es_dict['entry_signal_indicators'][params['entry_type']]]
+        
+            indicators['cci'] = cci
+        
+        # If the entry is momentum
+        if params['entry_type'] == 'momentum':
+
+            # Extract the momentum series from the core DataFrame
+            momentum = tables['prices'][
+                es_dict['entry_signal_indicators'][params['entry_type']]]
+        
+            indicators['momentum'] = momentum
+        
+        # If the entry is volatility
+        if params['entry_type'] == 'volatility':
+
+            # Extract the volatility series from the core DataFrame
+            volatility = tables['prices'][
+                es_dict['entry_signal_indicators'][params['entry_type']]]
+        
+            indicators['volatility'] = volatility
+
+        return indicators    
+    
+    
+    @staticmethod
+    def _get_trades(tables):
+        prices = tables['prices']
+        trade_data = {
+            'entry_dates': [],
+            'entry_prices': [],
+            'exit_dates': [],
+            'exit_prices': [],
+            'position_sizes': [],
+            'abs_pos_sizes': [],
+            'profits': [],
+            'directions': []
+            }
+
+        for row in range(1, len(prices)):
+            if (prices['raw_trade_number'].iloc[row] > 
+                prices['raw_trade_number'].iloc[row-1]):
+                trade_data['entry_dates'].append(str(prices.index[row].date()))
+                trade_data['entry_prices'].append(float(
+                    prices['Open'].iloc[row]))
+                trade_data['position_sizes'].append(int(
+                    prices['end_of_day_position'].iloc[row]))
+                trade_data['abs_pos_sizes'].append(abs(int(
+                    prices['end_of_day_position'].iloc[row])))
+                direction = ('Long' 
+                             if prices['end_of_day_position'].iloc[row] > 0 else 'Short')
+                trade_data['directions'].append(direction)
+
+            if (prices['trade_number'].iloc[row] == 0 
+                and prices['trade_number'].iloc[row-1] !=0):
+                trade_data['exit_dates'].append(str(prices.index[row-1].date()))
+                trade_data['exit_prices'].append(float(
+                    prices['Open'].iloc[row-1]))
+                trade_data['profits'].append(float(
+                    prices['cumulative_trade_pnl'].iloc[row-1]))
+
+
+            elif (prices['trade_number'].iloc[row] == 
+                  (prices['trade_number'].iloc[row-1] + 1) 
+                  and prices['trade_number'].iloc[row-1] !=0 
+                  and row != len(prices)-1):
+                trade_data['exit_dates'].append(str(prices.index[row].date()))
+                trade_data['exit_prices'].append(float(
+                    prices['Open'].iloc[row]))
+                trade_data['profits'].append(float(
+                    prices['cumulative_trade_pnl'].iloc[row]))
+
+            else:
+                if (row == len(prices)-1 
+                    and prices['trade_number'].iloc[-1] !=0):
+                    trade_data['exit_dates'].append(str(
+                        prices.index[-1].date()))
+                    trade_data['exit_prices'].append(float(
+                        prices['Close'].iloc[-1]))
+                    trade_data['profits'].append(float(
+                        prices['cumulative_trade_pnl'].iloc[-1]))
+
+        trade_data_array = []
+
+        for index, item in enumerate(trade_data['entry_dates']):
+            trade_dict = {}
+            trade_dict['entry_date'] = item
+            trade_dict['entry_price'] = trade_data['entry_prices'][index]
+            trade_dict['exit_date'] = trade_data['exit_dates'][index]
+            trade_dict['exit_price'] = trade_data['exit_prices'][index]
+            trade_dict['position_size'] = trade_data['position_sizes'][index]
+            trade_dict['abs_pos_size'] = trade_data['abs_pos_sizes'][index]
+            trade_dict['profit'] = trade_data['profits'][index]
+            trade_dict['direction'] = trade_data['directions'][index]
+            trade_data_array.append(trade_dict)
+
+        return trade_data, trade_data_array 
