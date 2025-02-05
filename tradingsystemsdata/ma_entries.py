@@ -43,15 +43,15 @@ class MovingAverageEntry():
         """
         close = np.array(prices['Close'])
 
-        ma1 = params['ma1']
-        ma2 = params['ma2']
+        ma1 = int(params['ma1'])
+        ma2 = int(params['ma2'])
         simple_ma = params['simple_ma']
 
         if simple_ma:
 
             # Create short and long simple moving averages
-            ma_1 = np.array(prices['Close'].rolling(str(ma1)+'D').mean())
-            ma_2 = np.array(prices['Close'].rolling(str(ma2)+'D').mean())
+            ma_1 = np.array(prices['Close'].rolling(ma1).mean())
+            ma_2 = np.array(prices['Close'].rolling(ma2).mean())
 
         else:
             # Create short and long exponential moving averages
@@ -145,16 +145,16 @@ class MovingAverageEntry():
 
         close = np.array(prices['Close'])
 
-        ma1 = params['ma1']
-        ma2 = params['ma2']
-        ma3 = params['ma3']
+        ma1 = int(params['ma1'])
+        ma2 = int(params['ma2'])
+        ma3 = int(params['ma3'])
         simple_ma = params['simple_ma']
 
         # Create fast, medium and slow simple moving averages
         if simple_ma:
-            ma_1 = np.array(prices['Close'].rolling(str(ma1)+'D').mean())
-            ma_2 = np.array(prices['Close'].rolling(str(ma2)+'D').mean())
-            ma_3 = np.array(prices['Close'].rolling(str(ma3)+'D').mean())
+            ma_1 = np.array(prices['Close'].rolling(ma1).mean())
+            ma_2 = np.array(prices['Close'].rolling(ma2).mean())
+            ma_3 = np.array(prices['Close'].rolling(ma3).mean())
 
         else:
             ma_1 = Indicators.EMA(
@@ -261,18 +261,18 @@ class MovingAverageEntry():
 
         close = np.array(prices['Close'])
 
-        ma1 = params['ma1']
-        ma2 = params['ma2']
-        ma3 = params['ma3']
-        ma4 = params['ma4']
+        ma1 = int(params['ma1'])
+        ma2 = int(params['ma2'])
+        ma3 = int(params['ma3'])
+        ma4 = int(params['ma4'])
         simple_ma = params['simple_ma']
 
         # Create the 4 simple moving averages
         if simple_ma:
-            ma_1 = np.array(prices['Close'].rolling(str(ma1)+'D').mean())
-            ma_2 = np.array(prices['Close'].rolling(str(ma2)+'D').mean())
-            ma_3 = np.array(prices['Close'].rolling(str(ma3)+'D').mean())
-            ma_4 = np.array(prices['Close'].rolling(str(ma4)+'D').mean())
+            ma_1 = np.array(prices['Close'].rolling(ma1).mean())
+            ma_2 = np.array(prices['Close'].rolling(ma2).mean())
+            ma_3 = np.array(prices['Close'].rolling(ma3).mean())
+            ma_4 = np.array(prices['Close'].rolling(ma4).mean())
 
         else:
             ma_1 = Indicators.EMA(
