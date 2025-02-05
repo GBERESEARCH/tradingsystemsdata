@@ -856,11 +856,17 @@ class CalculateSignalData():
             trade_dict = {}
             trade_dict['entry_date'] = item
             trade_dict['entry_price'] = trade_data['entry_prices'][index]
-            trade_dict['exit_date'] = trade_data['exit_dates'][index]
-            trade_dict['exit_price'] = trade_data['exit_prices'][index]
+            try:
+                trade_dict['exit_date'] = trade_data['exit_dates'][index]
+                trade_dict['exit_price'] = trade_data['exit_prices'][index]
+                trade_dict['profit'] = trade_data['profits'][index]
+            except IndexError:
+                trade_dict['exit_date'] = str(prices.index[-1].date())
+                trade_dict['exit_price'] = float(prices['Close'].iloc[-1])
+                trade_dict['profit'] = float(
+                    prices['cumulative_trade_pnl'].iloc[-1])
             trade_dict['position_size'] = trade_data['position_sizes'][index]
             trade_dict['abs_pos_size'] = trade_data['abs_pos_sizes'][index]
-            trade_dict['profit'] = trade_data['profits'][index]
             trade_dict['direction'] = trade_data['directions'][index]
             trade_data_array.append(trade_dict)
 
