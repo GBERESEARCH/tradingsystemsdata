@@ -492,12 +492,18 @@ class Positions():
             # Set a limit to the amount of margin used
             if ((params['ticker_source'] == 'norgate')
                 and (params['ticker'][0] == '&')):
+                # Why 0.15?
+                # max_contracts[row] = math.ceil(
+                #     (params['equity'] / params['per_contract_margin']) * 0.15)
                 max_contracts[row] = math.ceil(
-                    (params['equity'] / params['per_contract_margin']) * 0.15)
+                    (params['equity'] / params['per_contract_margin']) * params['margin_util'])
             else:
+                # max_contracts[row] = math.ceil(
+                #     (params['equity'] * params['margin_perc'] / 100)
+                #     / close[row])
                 max_contracts[row] = math.ceil(
-                    (params['equity'] * params['margin_perc'] / 100)
-                    / close[row])
+                    (params['equity'] / (params['margin_perc'] / 100))
+                    / (close[row] * params['contract_point_value']) * params['margin_util'])
 
             # If there is a trade on
             if trade_number[row] != 0:
