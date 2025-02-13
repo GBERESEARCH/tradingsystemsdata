@@ -7,7 +7,7 @@ system_params_dict = {
     # 'df_profit_bars':2,
     # 'df_stop_bars':2,
     # 'df_exit_factor':2,
-    'df_equity':100000.00,
+    'df_equity':1000000.00,
     'df_ticker':'$SPX',
     'df_norgate_bench_ticker':'$SPX',
     'df_yahoo_bench_ticker':'^SPX',
@@ -26,6 +26,7 @@ system_params_dict = {
     'df_atr_pos_size':14,
     'df_position_type':'atr',
     'df_margin_perc':20.0,
+    'df_margin_util': 0.8,
     'df_ticker_source':'norgate',
     'df_bench_source':'norgate',
     'df_slippage':5.0,
@@ -243,7 +244,7 @@ system_params_dict = {
         },
 
     'df_params':{
-        'equity':100000.00,
+        'equity':1000000.00,
         'ticker':'$SPX',
         'norgate_bench_ticker':'$SPX',
         'yahoo_bench_ticker':'^SPX',
@@ -297,6 +298,7 @@ system_params_dict = {
         'position_risk_perc':5.0,
         'equity_inv_perc':0.75,
         'margin_perc':20.0,
+        'margin_util':0.8,
         'contract_months':{
             '01':'F',
             '02':'G',
