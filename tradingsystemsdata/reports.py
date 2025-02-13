@@ -298,6 +298,8 @@ class PerfReport():
         # Set Ticker Longname
         if params['ticker_source'] == 'norgate':
             perf_dict['longname'] = norgate_name_dict[params['ticker']]
+        elif params['ticker_source'] == 'yahoo':
+            perf_dict['longname'] = params['longname']
         else:
             perf_dict['longname'] = perf_dict['contract']
 
