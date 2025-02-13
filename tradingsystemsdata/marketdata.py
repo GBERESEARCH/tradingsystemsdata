@@ -68,8 +68,11 @@ class Markets():
 
         # Extract data from Yahoo Finance
         elif source == 'yahoo':
-            prices = cls.return_yahoo_data(
-                ticker=input_ticker, params=params) 
+            prices, params = cls.return_yahoo_data(
+                ticker=input_ticker, 
+                params=params, 
+                benchmark_flag=benchmark_flag
+                ) 
 
         # Extract data from AlphaVantage
         elif source == 'alpha':
@@ -124,7 +127,8 @@ class Markets():
     @staticmethod
     def return_yahoo_data(
         ticker: str,
-        params: dict) -> pd.DataFrame:
+        params: dict,
+        benchmark_flag: bool) -> tuple[pd.DataFrame, dict]:
         """
         Create DataFrame of historic prices for specified ticker using Yahoo
         Finance as the source.
@@ -174,6 +178,24 @@ class Markets():
         # Initialize a yFinance object with the supplied ticker
         asset = yf.Ticker(ticker)
 
+        # Extract security long name
+        if benchmark_flag:
+            try:
+                params['benchmark_longname'] = asset.info['longName']
+            except KeyError:
+                try:
+                    params['benchmark_longname'] = asset.info['shortName']
+                except:
+                    params['benchmark_longname'] = ticker    
+        else:    
+            try:
+                params['longname'] = asset.info['longName']
+            except KeyError:
+                try:
+                    params['longname'] = asset.info['shortName']
+                except:
+                    params['longname'] = ticker
+
         # Extract historic prices
         prices = asset.history(
             start=params['start_date'], end=params['end_date']
@@ -195,7 +217,7 @@ class Markets():
             except:
                 pass
 
-        return prices
+        return prices, params
 
 
     @classmethod
@@ -586,7 +608,7 @@ class NorgateFunctions():
                 params['front_ticker'])
 
         else:
-            params['contract_point_value'] = 1
+            params['contract_point_value'] = 1000
 
         return params
 
