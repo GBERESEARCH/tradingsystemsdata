@@ -166,7 +166,8 @@ class Profit():
             # If the current position is not flat
             else:
                 # If the position is the same as the previous day
-                if pos[row] == pos[row - 1]:
+                # if pos[row] == pos[row - 1]:
+                if (pos[row] * pos[row - 1]) > 0:
 
                     # Set the pnl to the current position * the difference
                     # between todays close and yesterdays close
@@ -175,7 +176,8 @@ class Profit():
                                     * params['contract_point_value'])
 
                 # If the position is reversed from the previous day
-                elif pos[row] == (-1) * pos[row - 1]:
+                # elif pos[row] == (-1) * pos[row - 1]:
+                elif (pos[row] * pos[row - 1]) < 0:
                     day_pnl[row] = (
                         ((pos[row] * (close[row] - open_[row])
                          - abs(pos[row]
@@ -325,11 +327,11 @@ class Profit():
                     # Set the closed equity to the previous days closed equity
                     closed_equity[row] = closed_equity[row-1]
 
-
                 # If it is the trade entry date and this reverses the position
-                # of a prior trade
+                # of a prior trade which was in place for multiple days
                 elif (trade_row_num == 0
-                    and trade_number[row - 1] != 0):
+                    and trade_number[row - 1] != 0
+                    and (trade_number[row - 1] == trade_number[row - 2])):
 
                     # Set cumulative trade pnl to the previous days cumulative
                     # pnl plus the last days pnl
@@ -341,10 +343,29 @@ class Profit():
                     max_trade_pnl[row] = max(
                         cumulative_trade_pnl[row], max_trade_pnl[row-1])
 
-                    # Set the closed equity to the previous days closed equity
+                    # Set the closed equity to mark to market equity plus the last days trade pnl
                     closed_equity[row] = (mtm_equity[row-1]
                                           + last_day_trade_pnl[row])
 
+                # If it is the trade entry date and this reverses the position
+                # of a prior trade which reversed the prior day
+                elif (trade_row_num == 0
+                    and trade_number[row - 1] != 0
+                    and (trade_number[row - 1] != trade_number[row - 2])):
+
+                    # Set cumulative trade pnl to the previous days cumulative
+                    # pnl plus the last days pnl
+                    cumulative_trade_pnl[row] = (current_trade_pnl[row-1] 
+                                                 + last_day_trade_pnl[row])
+
+                    # The maximum of the current trade equity and the maximum
+                    # trade equity of the previous day
+                    max_trade_pnl[row] = (current_trade_pnl[row-1] 
+                                          + last_day_trade_pnl[row])
+
+                    # Set the closed equity to the previous days closed equity
+                    closed_equity[row] = (mtm_equity[row-1]
+                                          + last_day_trade_pnl[row])
 
                 # If it is the trade exit date and not a reversal
                 elif (trade_last_row - row == 0 #type: ignore

@@ -808,19 +808,34 @@ class CalculateSignalData():
             }
 
         for row in range(1, len(prices)):
+
+            # Trade Entry Details 
+            # For each day when a new trade is started
             if (prices['raw_trade_number'].iloc[row] > 
                 prices['raw_trade_number'].iloc[row-1]):
+
+                # Add the trade entry date
                 trade_data['entry_dates'].append(str(prices.index[row].date()))
+                
+                # Add the trade entry price
                 trade_data['entry_prices'].append(float(
                     prices['Open'].iloc[row]))
+
+                # Add the position size
                 trade_data['position_sizes'].append(int(
                     prices['end_of_day_position'].iloc[row]))
+                
+                # Add the absolute position size    
                 trade_data['abs_pos_sizes'].append(abs(int(
                     prices['end_of_day_position'].iloc[row])))
+                
+                # Add the trade direction
                 direction = ('Long' 
                              if prices['end_of_day_position'].iloc[row] > 0 else 'Short')
                 trade_data['directions'].append(direction)
 
+            # Trade Exit Details
+            # Closing out the previous days trade with no new trade
             if (prices['trade_number'].iloc[row] == 0 
                 and prices['trade_number'].iloc[row-1] !=0):
                 trade_data['exit_dates'].append(str(prices.index[row-1].date()))
@@ -829,7 +844,7 @@ class CalculateSignalData():
                 trade_data['profits'].append(float(
                     prices['cumulative_trade_pnl'].iloc[row-1]))
 
-
+            # Closing out the previous days trade and there is a new trade
             elif (prices['trade_number'].iloc[row] == 
                   (prices['trade_number'].iloc[row-1] + 1) 
                   and prices['trade_number'].iloc[row-1] !=0 
@@ -840,15 +855,22 @@ class CalculateSignalData():
                 trade_data['profits'].append(float(
                     prices['cumulative_trade_pnl'].iloc[row]))
 
+            # On the last day if the previous day was an open trade and this is reversed there needs to be two trade exits
             else:
                 if (row == len(prices)-1 
-                    and prices['trade_number'].iloc[-1] !=0):
+                    and prices['trade_number'].iloc[row] !=0):
                     trade_data['exit_dates'].append(str(
-                        prices.index[-1].date()))
+                        prices.index[row].date()))
+                    trade_data['exit_dates'].append(str(
+                        prices.index[row].date()))
                     trade_data['exit_prices'].append(float(
-                        prices['Close'].iloc[-1]))
+                        prices['Open'].iloc[row]))
+                    trade_data['exit_prices'].append(float(
+                        prices['Close'].iloc[row]))
                     trade_data['profits'].append(float(
-                        prices['cumulative_trade_pnl'].iloc[-1]))
+                        prices['cumulative_trade_pnl'].iloc[row]))
+                    trade_data['profits'].append(float(
+                        prices['daily_pnl'].iloc[row]))
 
         trade_data_array = []
 
@@ -856,15 +878,15 @@ class CalculateSignalData():
             trade_dict = {}
             trade_dict['entry_date'] = item
             trade_dict['entry_price'] = trade_data['entry_prices'][index]
-            try:
-                trade_dict['exit_date'] = trade_data['exit_dates'][index]
-                trade_dict['exit_price'] = trade_data['exit_prices'][index]
-                trade_dict['profit'] = trade_data['profits'][index]
-            except IndexError:
-                trade_dict['exit_date'] = str(prices.index[-1].date())
-                trade_dict['exit_price'] = float(prices['Close'].iloc[-1])
-                trade_dict['profit'] = float(
-                    prices['cumulative_trade_pnl'].iloc[-1])
+            #try:
+            trade_dict['exit_date'] = trade_data['exit_dates'][index]
+            trade_dict['exit_price'] = trade_data['exit_prices'][index]
+            trade_dict['profit'] = trade_data['profits'][index]
+            # except IndexError:
+            #     trade_dict['exit_date'] = str(prices.index[-1].date())
+            #     trade_dict['exit_price'] = float(prices['Close'].iloc[-1])
+            #     trade_dict['profit'] = float(
+            #         prices['cumulative_trade_pnl'].iloc[-1])
             trade_dict['position_size'] = trade_data['position_sizes'][index]
             trade_dict['abs_pos_size'] = trade_data['abs_pos_sizes'][index]
             trade_dict['direction'] = trade_data['directions'][index]
