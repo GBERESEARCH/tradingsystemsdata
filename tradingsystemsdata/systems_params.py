@@ -327,5 +327,40 @@ system_params_dict = {
         '10':'V',
         '11':'X',
         '12':'Z'
+        },
+
+    'df_portfolio_params': {
+        'allocation_method': 'equal_weight',
+        'rebalance_frequency': 'monthly',
+        'rebalance_threshold': 0.05,
+        'max_allocation': 0.25,
+        'portfolio_stop_pct': 0.15,
+        'risk_parity_lookback': 252,
+        'correlation_lookback': 252,
+        'volatility_lookback': 63,
+        'min_weight': 0.02,
+        'max_weight': 0.30,
+        'transaction_cost_pct': 0.001
+        },
+
+    'df_portfolios': {
+        'equities': {
+            'US_TECH': {
+                'AAPL': None,
+                'MSFT': None,
+                'GOOGL': None,
+                'AMZN': None,
+                'META': None
+            }
+        },
+        'commodities': {
+            'FUTURES': {
+                '$GC': None,  # Gold
+                '$SI': None,  # Silver
+                '$CL': None,  # Crude Oil
+                '$NG': None,  # Natural Gas
+                '$ZC': None   # Corn
+            }
         }
-    }
+    }    
+}
