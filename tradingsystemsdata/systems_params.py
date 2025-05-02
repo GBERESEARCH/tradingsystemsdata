@@ -342,25 +342,4 @@ system_params_dict = {
         'max_weight': 0.30,
         'transaction_cost_pct': 0.001
         },
-
-    'df_portfolios': {
-        'equities': {
-            'US_TECH': {
-                'AAPL': None,
-                'MSFT': None,
-                'GOOGL': None,
-                'AMZN': None,
-                'META': None
-            }
-        },
-        'commodities': {
-            'FUTURES': {
-                '$GC': None,  # Gold
-                '$SI': None,  # Silver
-                '$CL': None,  # Crude Oil
-                '$NG': None,  # Natural Gas
-                '$ZC': None   # Corn
-            }
-        }
-    }    
 }
