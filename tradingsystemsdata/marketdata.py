@@ -208,11 +208,11 @@ class Markets():
         prices.index = pd.to_datetime(prices.index)
 
         try:
-            prices.index = prices.index.tz_localize(None)
+            prices.index = prices.index.tz_localize(None) #type: ignore
             prices.index = prices.index.normalize() #type: ignore
         except: 
             try:
-                prices.index = prices.index.tz_convert(None)
+                prices.index = prices.index.tz_convert(None) #type: ignore
                 prices.index = prices.index.normalize() #type: ignore
             except:
                 pass
