@@ -7,6 +7,9 @@ import numpy as np
 import pandas as pd
 pd.options.mode.chained_assignment = None
 
+# pyright: reportOperatorIssue=false
+# pyright: reportAttributeAccessIssue=false
+ 
 class Profit():
     """
     Functions for calculating trade profits, mark to market equity, trade
@@ -166,7 +169,6 @@ class Profit():
             # If the current position is not flat
             else:
                 # If the position is the same as the previous day
-                # if pos[row] == pos[row - 1]:
                 if (pos[row] * pos[row - 1]) > 0:
 
                     # Set the pnl to the current position * the difference
@@ -176,7 +178,6 @@ class Profit():
                                     * params['contract_point_value'])
 
                 # If the position is reversed from the previous day
-                # elif pos[row] == (-1) * pos[row - 1]:
                 elif (pos[row] * pos[row - 1]) < 0:
                     day_pnl[row] = (
                         ((pos[row] * (close[row] - open_[row])
@@ -798,68 +799,62 @@ class Profit():
         # For each month
         for row in range(1, len(monthly_data)):
 
+            idx = monthly_data.index[row]
+            idx_prev = monthly_data.index[row - 1]
+
             # Beginning equity is the closing equity from the prior period
-            # Raw data keeps all the profits invested whereas the other resets
-            # the equity balance each year
-            monthly_data['beginning_equity'].iat[row] = monthly_data[
-                'end_equity'].iat[row - 1]
-            monthly_data['beginning_equity_raw'].iat[row] = monthly_data[
-                'end_equity_raw'].iat[row - 1]
+            monthly_data.loc[idx, 'beginning_equity'] = monthly_data.loc[idx_prev, 'end_equity']
+            monthly_data.loc[idx, 'beginning_equity_raw'] = monthly_data.loc[idx_prev, 'end_equity_raw']
 
             monthly_data.index = pd.to_datetime(monthly_data.index)
-            # For each change in year
-            if monthly_data.index.year[row] != monthly_data.index.year[row-1]:
+            idx = monthly_data.index[row]
+            idx_prev = monthly_data.index[row - 1]
 
-                # If the end of year equity level is less than the initial
-                # level
-                if monthly_data['end_equity'].iat[row - 1] < equity:
+            # For each change in year
+            if pd.DatetimeIndex(monthly_data.index).year[row] != pd.DatetimeIndex(monthly_data.index).year[row-1]:
+
+                # If the end of year equity level is less than the initial level
+                if monthly_data.loc[idx_prev, 'end_equity'] < equity:
 
                     # Add back the difference to additions
-                    monthly_data['additions'].iat[row] = (
-                        equity - monthly_data['end_equity'].iat[row - 1])
+                    monthly_data.loc[idx, 'additions'] = (
+                        equity - monthly_data.loc[idx_prev, 'end_equity'])
                 else:
                     # Otherwise subtract from withdrawals
-                    monthly_data['withdrawals'].iat[row] = (
-                        equity - monthly_data['end_equity'].iat[row - 1])
+                    monthly_data.loc[idx, 'withdrawals'] = (
+                        equity - monthly_data.loc[idx_prev, 'end_equity'])
 
-            # Ending equity is the beginning equity plus the sum of additions,
-            # withdrawals and the net pnl over the period
-            monthly_data['end_equity'].iat[row] = (
-                monthly_data['beginning_equity'].iat[row]
-                + monthly_data['total_net_profit'].iat[row]
-                + monthly_data['additions'].iat[row]
-                + monthly_data['withdrawals'].iat[row])
+            # Ending equity
+            monthly_data.loc[idx, 'end_equity'] = (
+                monthly_data.loc[idx, 'beginning_equity']
+                + monthly_data.loc[idx, 'total_net_profit']
+                + monthly_data.loc[idx, 'additions']
+                + monthly_data.loc[idx, 'withdrawals'])
 
-            # Ending equity raw is the beginning equity plus the net pnl over
-            # the period
-            monthly_data['end_equity_raw'].iat[row] = (
-                monthly_data['beginning_equity_raw'].iat[row]
-                + monthly_data['total_net_profit'].iat[row])
+            # Ending equity raw
+            monthly_data.loc[idx, 'end_equity_raw'] = (
+                monthly_data.loc[idx, 'beginning_equity_raw']
+                + monthly_data.loc[idx, 'total_net_profit'])
 
-            # Monthly return is the net pnl over the period divided by the
-            # beginning equity plus the sum of additions and withdrawals
-            monthly_data['return'].iat[row] = (
-                (monthly_data['total_net_profit'].iat[row])
-                / (monthly_data['beginning_equity'].iat[row]
-                   + monthly_data['additions'].iat[row]
-                   + monthly_data['withdrawals'].iat[row]))
+            # Monthly return
+            monthly_data.loc[idx, 'return'] = (
+                monthly_data.loc[idx, 'total_net_profit']
+                / (monthly_data.loc[idx, 'beginning_equity']
+                   + monthly_data.loc[idx, 'additions']
+                   + monthly_data.loc[idx, 'withdrawals']))
 
-            # Monthly return raw is the net pnl over the period divided by the
-            # beginning equity raw
-            monthly_data['return_raw'].iat[row] = (
-                (monthly_data['total_net_profit'].iat[row])
-                / (monthly_data['beginning_equity_raw'].iat[row]))
+            # Monthly return raw
+            monthly_data.loc[idx, 'return_raw'] = (
+                monthly_data.loc[idx, 'total_net_profit']
+                / monthly_data.loc[idx, 'beginning_equity_raw'])
 
-            # For use in Gain to Pain Ratio, absolute loss is the positive
-            # value of the negative monthly returns
-            if monthly_data['return'].iat[row] < 0:
-                monthly_data['abs_loss'].iat[row] = -monthly_data['return'].iat[row]
+            # Absolute loss for Gain to Pain Ratio
+            if monthly_data.loc[idx, 'return'] < 0:
+                monthly_data.loc[idx, 'abs_loss'] = -monthly_data.loc[idx, 'return']
 
-            # For use in Gain to Pain Ratio, absolute loss is the positive
-            # value of the negative monthly returns
-            if monthly_data['return_raw'].iat[row] < 0:
-                monthly_data['abs_loss_raw'].iat[row] = -monthly_data[
-                    'return_raw'].iat[row]
+            # Absolute loss raw for Gain to Pain Ratio
+            if monthly_data.loc[idx, 'return_raw'] < 0:
+                monthly_data.loc[idx, 'abs_loss_raw'] = -monthly_data.loc[idx, 'return_raw']
 
         return monthly_data
 
@@ -868,18 +863,13 @@ class Profit():
     def _initialise_monthly_data(
         prices: pd.DataFrame,
         equity: int) -> pd.DataFrame:
-        # Create empty DataFrame
-        monthly_data = pd.DataFrame()
 
-        # Summarize daily pnl data by resampling to monthly
-        monthly_data['total_net_profit'] = prices[
-            'daily_pnl'].resample('1ME').sum()
-        monthly_data['average_net_profit'] = prices[
-            'daily_pnl'].resample('1ME').mean()
-        monthly_data['max_net_profit'] = prices[
-            'daily_pnl'].resample('1ME').max()
-        monthly_data['min_net_profit'] = prices[
-            'daily_pnl'].resample('1ME').min()
+        monthly_data = pd.DataFrame({
+            'total_net_profit': prices['daily_pnl'].resample('1ME').sum(),
+            'average_net_profit': prices['daily_pnl'].resample('1ME').mean(),
+            'max_net_profit': prices['daily_pnl'].resample('1ME').max(),
+            'min_net_profit': prices['daily_pnl'].resample('1ME').min(),
+        }).copy()
 
         # Create arrays of zeros to hold data
         monthly_data['beginning_equity'] = np.array([0.0]*len(monthly_data))
@@ -887,31 +877,32 @@ class Profit():
         monthly_data['withdrawals'] = np.array([0.0]*len(monthly_data))
         monthly_data['end_equity'] = np.array([0.0]*len(monthly_data))
         monthly_data['return'] = np.array([0.0]*len(monthly_data))
-        monthly_data['beginning_equity_raw'] = np.array(
-            [0.0]*len(monthly_data))
+        monthly_data['beginning_equity_raw'] = np.array([0.0]*len(monthly_data))
         monthly_data['end_equity_raw'] = np.array([0.0]*len(monthly_data))
         monthly_data['return_raw'] = np.array([0.0]*len(monthly_data))
         monthly_data['abs_loss'] = np.array([0.0]*len(monthly_data))
         monthly_data['abs_loss_raw'] = np.array([0.0]*len(monthly_data))
 
-        # Set initial values
-        monthly_data['additions'].iat[0] = equity
-        monthly_data['end_equity'].iat[0] = (
-            monthly_data['beginning_equity'].iat[0]
-            + monthly_data['additions'].iat[0]
-            + monthly_data['withdrawals'].iat[0]
-            + monthly_data['total_net_profit'].iat[0])
-        monthly_data['return'].iat[0] = (
-            (monthly_data['total_net_profit'].iat[0])
-            / (monthly_data['beginning_equity'].iat[0]
-               + monthly_data['additions'].iat[0]
-               + monthly_data['withdrawals'].iat[0]))
-        monthly_data['beginning_equity_raw'].iat[0] = equity
-        monthly_data['end_equity_raw'].iat[0] = (
-            monthly_data['beginning_equity_raw'].iat[0]
-            + monthly_data['total_net_profit'].iat[0])
-        monthly_data['return_raw'].iat[0] = (
-            (monthly_data['total_net_profit'].iat[0])
-            / (monthly_data['beginning_equity_raw'].iat[0]))
+        # Set initial values using .loc to avoid CoW ChainedAssignmentError
+        idx0 = monthly_data.index[0]
+
+        monthly_data.loc[idx0, 'additions'] = equity
+        monthly_data.loc[idx0, 'end_equity'] = (
+            monthly_data.loc[idx0, 'beginning_equity']
+            + monthly_data.loc[idx0, 'additions']
+            + monthly_data.loc[idx0, 'withdrawals']
+            + monthly_data.loc[idx0, 'total_net_profit'])
+        monthly_data.loc[idx0, 'return'] = (
+            monthly_data.loc[idx0, 'total_net_profit']
+            / (monthly_data.loc[idx0, 'beginning_equity']
+               + monthly_data.loc[idx0, 'additions']
+               + monthly_data.loc[idx0, 'withdrawals']))
+        monthly_data.loc[idx0, 'beginning_equity_raw'] = equity
+        monthly_data.loc[idx0, 'end_equity_raw'] = (
+            monthly_data.loc[idx0, 'beginning_equity_raw']
+            + monthly_data.loc[idx0, 'total_net_profit'])
+        monthly_data.loc[idx0, 'return_raw'] = (
+            monthly_data.loc[idx0, 'total_net_profit']
+            / monthly_data.loc[idx0, 'beginning_equity_raw'])
 
         return monthly_data
